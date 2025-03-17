@@ -18,13 +18,6 @@ interface TimerModalProps {
   currentCounterValue: number,
 }
 
-/** i dont want to fix stuff in the normal way so i coded workaround
- * There was a bug that was casued by updatingState of parent only on unmount
- * So when timer was run, all states and vals updated at once so some of them were using old timerValue
- * so basically i made a state that unmounts time-picker causing it to update state 
- * of timeLeft and only then run timer
- */
-
 export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCounter, stopCounter, initialCounterValue, currentCounterValue}: TimerModalProps) {
   const [turnOnDevice, setTurnOnDevice] = useState(false);
   const handleStartStop = () => {
