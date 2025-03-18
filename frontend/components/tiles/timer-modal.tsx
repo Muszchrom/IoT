@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Check, Timer } from "lucide-react";
 import { useState } from "react";
 import CountdownCircleTimer from "../countdown-circle-timer";
+import Wrapper from "../wrapper";
 
 interface TimerModalProps {
   timeLeft: number,
@@ -37,43 +38,45 @@ export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCoun
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0">
-        <DialogHeader className="mb-6">
-          <DialogTitle>Minutnik</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0 min-w-sm">
+        <Wrapper>
+          <DialogHeader className="mb-6">
+            <DialogTitle>Minutnik</DialogTitle>
+          </DialogHeader>
 
-        {isCounting ? (
-          <CountdownCircleTimer initValue={initialCounterValue} currentValue={currentCounterValue} />
-        ) : (
-          <>
-          <Card>
-            <CardHeader>
-              <TimePicker timeLeft={timeLeft} setTimeLeft={setTimeLeft}/>
-            </CardHeader>
-          </Card>
+          {isCounting ? (
+            <CountdownCircleTimer initValue={initialCounterValue} currentValue={currentCounterValue} />
+          ) : (
+            <>
+            <Card>
+              <CardHeader>
+                <TimePicker timeLeft={timeLeft} setTimeLeft={setTimeLeft}/>
+              </CardHeader>
+            </Card>
 
-          <div className="flex flex-col w-full">
-            <span className="text-muted-foreground mb-2 ml-1">Po upywie czasu minutnika</span>
-            <Button type="button" variant="outline" className="p-6 border-b-0 rounded-b-none justify-between" onClick={() => setTurnOnDevice(true)}>
-              Włącz urządzenie
-              <div className={cn(!turnOnDevice && "hidden")}><Check /></div>
+            <div className="flex flex-col w-full">
+              <span className="text-muted-foreground mb-2 ml-1">Po upywie czasu minutnika</span>
+              <Button type="button" variant="outline" className="p-6 border-b-0 rounded-b-none justify-between" onClick={() => setTurnOnDevice(true)}>
+                Włącz urządzenie
+                <div className={cn(!turnOnDevice && "hidden")}><Check /></div>
+              </Button>
+              <Button type="button" variant="outline" className="p-6 rounded-t-none justify-between" onClick={() => setTurnOnDevice(false)}>
+                Wyłącz urządzenie
+                <div className={cn(turnOnDevice && "hidden")}><Check /></div>
+              </Button>
+            </div>
+            </>
+          )}
+
+          <DialogFooter className="mt-auto flex-row items-center">
+            <div>
+              {isCounting && (turnOnDevice ? "Włączy urządzenie" : "Wyłączy urządzenie")}
+            </div>
+            <Button variant={isCounting ? "destructive" : "default"} className="ml-auto font-bold px-8" onClick={handleStartStop}>
+              {isCounting ? "stop" : "Start"}
             </Button>
-            <Button type="button" variant="outline" className="p-6 rounded-t-none justify-between" onClick={() => setTurnOnDevice(false)}>
-              Wyłącz urządzenie
-              <div className={cn(turnOnDevice && "hidden")}><Check /></div>
-            </Button>
-          </div>
-          </>
-        )}
-
-        <DialogFooter className="mt-auto flex-row items-center">
-          <div>
-            {isCounting && (turnOnDevice ? "Włączy urządzenie" : "Wyłączy urządzenie")}
-          </div>
-          <Button variant={isCounting ? "destructive" : "default"} className="ml-auto font-bold px-8" onClick={handleStartStop}>
-            {isCounting ? "stop" : "Start"}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        </Wrapper>
       </DialogContent>
     </Dialog>
   )

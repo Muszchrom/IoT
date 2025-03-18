@@ -1,18 +1,13 @@
 'use client';
 import PowerIndicator from "@/components/tiles/power-indicator";
-import { SliderFat } from "@/components/slider-fat";
 import Brightness from "@/components/tiles/brightness";
-import TimePicker from "@/components/time-picker";
 import TimerModal from "@/components/tiles/timer-modal";
 import TurnOnOff from "@/components/tiles/turn-on-off";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
-import { CalendarPlus, Timer, TimerIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { CalendarPlus } from "lucide-react";
 import { useEffect, useState } from "react";
+import Wrapper from "@/components/wrapper";
 
 export default function LightBulb() {
   const [isOn, setIsOn] = useState(false);
@@ -63,7 +58,7 @@ export default function LightBulb() {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-2 max-w-lg">
+    <Wrapper>
       <PowerIndicator isOn={isOn}/>
       <TurnOnOff isOn={isOn} setIsOn={setIsOn}/>
       <Brightness />
@@ -86,7 +81,7 @@ export default function LightBulb() {
 
       <Card><CardContent>Auto turn on/off based on yearly sunrise/sunset equation</CardContent></Card>
       <Card><CardContent>Harmonogram jak w tapo</CardContent></Card>
-    </div>
+    </Wrapper>
   )
 }
 
