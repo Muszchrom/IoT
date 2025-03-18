@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Card } from "./ui/card";
-import PowerSVG from "./power-svg";
+import { Card } from "@/components/ui/card";
+import PowerSVG from "@/components/svg/power-svg";
 
 export default function TurnOnOff({isOn, setIsOn}: {isOn: boolean, setIsOn: (val: boolean) => void}) {
   return (

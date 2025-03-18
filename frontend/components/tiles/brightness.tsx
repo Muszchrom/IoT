@@ -1,5 +1,5 @@
-import { SliderFat } from "./slider-fat";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { SliderFat } from "@/components/slider-fat";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Brightness() {
   // onValueChange={(i) => handleValueChange(i)}

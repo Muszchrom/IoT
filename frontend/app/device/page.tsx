@@ -1,10 +1,10 @@
 'use client';
-import Brightness from "@/components/brightness";
-import PowerIndicator from "@/components/power-indicator";
+import PowerIndicator from "@/components/tiles/power-indicator";
 import { SliderFat } from "@/components/slider-fat";
+import Brightness from "@/components/tiles/brightness";
 import TimePicker from "@/components/time-picker";
-import TimerModal from "@/components/timer-modal";
-import TurnOnOff from "@/components/turn-on-off";
+import TimerModal from "@/components/tiles/timer-modal";
+import TurnOnOff from "@/components/tiles/turn-on-off";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";

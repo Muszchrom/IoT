@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { cn } from "@/lib/utils";
 import { Check, Timer } from "lucide-react";
 import { useState } from "react";
-import CountdownCircleTimer from "./countdown-circle-timer";
+import CountdownCircleTimer from "../countdown-circle-timer";
 
 interface TimerModalProps {
   timeLeft: number,

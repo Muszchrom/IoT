@@ -1,5 +1,5 @@
-import LightBulbSVG from "./light-bulb-svg";
-import { Card } from "./ui/card";
+import LightBulbSVG from "@/components/svg/light-bulb-svg";
+import { Card } from "@/components/ui/card";
 
 export default function PowerIndicator({isOn}: {isOn: boolean}) {
   return (
