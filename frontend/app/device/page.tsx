@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CalendarPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import Wrapper from "@/components/wrapper";
+import ScheduleModal from "@/components/tiles/schedule-modal";
 
 export default function LightBulb() {
   const [isOn, setIsOn] = useState(false);
@@ -72,10 +73,7 @@ export default function LightBulb() {
                       stopCounter={stopCounter}
                       initialCounterValue={timerValue}
                       currentCounterValue={secondsLeft} />
-          <Button variant="outline" className="w-full shrink p-6 h-auto flex-col [&_svg]:shrink [&_svg:not([class*='size-'])]:size-auto">
-            <CalendarPlus size={32} />
-            <span className="text-muted-foreground">Harmonogram</span>
-          </Button>
+          <ScheduleModal />
         </div>
       </div>
 

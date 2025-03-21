@@ -1,11 +1,7 @@
 'use client';
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { pad } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
-
-const pad = (num: number | string) => {
-  num = num.toString();
-  return num.length < 2 ? "0" + num : num; 
-}
 
 interface TimePickerProps {
   timeLeft: number,
