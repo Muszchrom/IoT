@@ -24,7 +24,7 @@ export default function ScheduledAction({data, handleClick}: ScheduledActionProp
       <div className="w-full flex items-center ">
         <Button variant="ghost" 
                 onClick={handleClick}
-                className="w-full h-auto p-4 flex gap-4 shrink items-center justify-start text-left font-normal text-md [&_svg]:shrink [&_svg:not([class*='size-'])]:size-auto">
+                className="w-full h-auto px-4 py-6 flex gap-4 shrink items-center justify-start text-left font-normal text-md [&_svg]:shrink [&_svg:not([class*='size-'])]:size-auto">
           <div>
             <LightBulbSVG size={"48px"} isOn={data.action === "turn-on"} darker={true}/>
           </div>

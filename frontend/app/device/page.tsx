@@ -76,9 +76,6 @@ export default function LightBulb() {
           <ScheduleModal />
         </div>
       </div>
-
-      <Card><CardContent>Auto turn on/off based on yearly sunrise/sunset equation</CardContent></Card>
-      <Card><CardContent>Harmonogram jak w tapo</CardContent></Card>
     </Wrapper>
   )
 }

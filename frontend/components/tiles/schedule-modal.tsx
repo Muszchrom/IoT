@@ -6,6 +6,9 @@ import { ExampleData } from "@/interfaces/schedule";
 import ScheduledAction from "../scheduled-action";
 import { Separator } from "../ui/separator";
 import { useEffect, useState } from "react";
+import TimePicker from "../time-picker";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import EditSchedule from "./edit-schedule";
 
 interface ScheduleModalProps {
 
@@ -20,6 +23,12 @@ export default function ScheduleModal({}: ScheduleModalProps) {
       time: 21600, 
       auto: true, 
       action: "turn-on",
+      repeats: [false, true, true, true, true, true, false] 
+    },
+    {
+      time: 82800, 
+      auto: false, 
+      action: "turn-off",
       repeats: [false, true, true, true, true, true, false] 
     },
     {
@@ -54,7 +63,7 @@ export default function ScheduleModal({}: ScheduleModalProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent retrunButtonFunction={handleReturnFromEdit} className="w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0 min-w-sm">
+      <DialogContent retrunButtonFunction={handleReturnFromEdit} className="overflow-auto w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0 min-w-sm">
         <Wrapper className="min-h-full">
           <DialogHeader className="mb-6">
             <DialogTitle>Harmonogram</DialogTitle>
@@ -63,11 +72,11 @@ export default function ScheduleModal({}: ScheduleModalProps) {
           {editPageDataIndex === null ? (
             <>
               {exampleData.length && (
-                <div className="bg-neutral-900 rounded-md flex flex-col ">
+                <Card className="py-0 gap-0">
                   {exampleData.map((action, idx) => {
                     return <ScheduledAction data={action} key={idx} handleClick={() => handleShowEditPage(idx)}/>
                   })}
-                </div>
+                </Card>
               )}
 
               <Button variant="outline" className="mt-auto font-bold">
@@ -76,7 +85,7 @@ export default function ScheduleModal({}: ScheduleModalProps) {
             </>
           ) : (
             <>
-              Edit
+              <EditSchedule />
             </>
           )}
 
@@ -85,3 +94,5 @@ export default function ScheduleModal({}: ScheduleModalProps) {
     </Dialog>
   )
 }
+
+

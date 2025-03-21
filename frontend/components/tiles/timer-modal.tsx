@@ -38,7 +38,7 @@ export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCoun
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0 min-w-sm">
+      <DialogContent className="overflow-auto w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0 min-w-sm">
         <Wrapper>
           <DialogHeader className="mb-6">
             <DialogTitle>Minutnik</DialogTitle>
