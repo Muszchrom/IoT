@@ -15,9 +15,6 @@ interface ScheduleModalProps {
 }
 
 export default function ScheduleModal({}: ScheduleModalProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editPageDataIndex, setEditPageDataIndex] = useState<null | number>(null);
-
   const exampleData: ExampleData[] = [
     {
       time: 21600, 
@@ -39,6 +36,17 @@ export default function ScheduleModal({}: ScheduleModalProps) {
     }
   ];
 
+  const [scheduleDataArray, setScheduleDataArray] = useState(exampleData);
+  const [editPageDataIndex, setEditPageDataIndex] = useState<null | number>(null); // which schedule to edit, like which tile or something. Set as -1 to add new. Null means its not set
+
+
+  const updateScheduleDataArray = (val: ExampleData, idx: number) => {
+    if (idx !== null && idx >= 0) {
+      scheduleDataArray[idx] = val;
+      setScheduleDataArray([...scheduleDataArray])
+    }
+  }
+
   const handleShowEditPage = (idx: number) => {
     setEditPageDataIndex(idx);
   }
@@ -55,7 +63,7 @@ export default function ScheduleModal({}: ScheduleModalProps) {
   }, [editPageDataIndex])
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+    <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full shrink p-6 h-auto flex-col [&_svg]:shrink [&_svg:not([class*='size-'])]:size-auto">
           <CalendarPlus size={32} />
@@ -71,10 +79,10 @@ export default function ScheduleModal({}: ScheduleModalProps) {
 
           {editPageDataIndex === null ? (
             <>
-              {exampleData.length && (
+              {scheduleDataArray.length && (
                 <Card className="py-0 gap-0">
-                  {exampleData.map((action, idx) => {
-                    return <ScheduledAction data={action} key={idx} handleClick={() => handleShowEditPage(idx)}/>
+                  {scheduleDataArray.map((scheduleData, idx) => {
+                    return <ScheduledAction data={scheduleData} key={idx} handleClick={() => handleShowEditPage(idx)}/>
                   })}
                 </Card>
               )}
@@ -85,7 +93,7 @@ export default function ScheduleModal({}: ScheduleModalProps) {
             </>
           ) : (
             <>
-              <EditSchedule />
+              <EditSchedule scheduleData={scheduleDataArray[editPageDataIndex]} setScheduleData={(val: ExampleData) => updateScheduleDataArray(val, editPageDataIndex)}/>
             </>
           )}
 

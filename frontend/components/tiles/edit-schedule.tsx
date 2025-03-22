@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, Check } from "lucide-react";
 import Wrapper from "@/components/wrapper";
-import { ExampleData } from "@/interfaces/schedule";
+import { ExampleData, FixedLengthArray } from "@/interfaces/schedule";
 import ScheduledAction from "../scheduled-action";
 import { Separator } from "../ui/separator";
 import { useEffect, useState } from "react";
@@ -10,11 +10,46 @@ import TimePicker from "../time-picker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { cn } from "@/lib/utils";
 
-export default function EditSchedule() {
+export default function EditSchedule({scheduleData, setScheduleData}: {scheduleData?: ExampleData, setScheduleData: (val: ExampleData) => void}) {
+  const ifScheduleDataNotPresent: ExampleData = {
+    time: 0,
+    auto: false,
+    action: "turn-on",
+    repeats: [false, false, false, false, false, false, false]
+  }
+  const [scheduleDataState, setScheduleDataState] = useState<ExampleData>(scheduleData || ifScheduleDataNotPresent)
+
+  const updateActAtTheseDays = (arr: ExampleData["repeats"]) => {
+    scheduleDataState.repeats = arr
+    setScheduleDataState({...scheduleDataState})
+  }
+
+  const updateAction = (val: ExampleData["action"]) => {
+    scheduleDataState.action = val
+    setScheduleDataState({...scheduleDataState})
+  }
+
+  useEffect(() => {
+    console.log(scheduleDataState)
+    return () => setScheduleData(scheduleDataState)
+  }, [scheduleDataState])
+
+  return (
+    <>
+      <DeviceActionTimeSettings />
+      <DeviceStateAfterTimeIsReached deviceStateAfter={scheduleDataState.action} setDeviceStateAfter={updateAction}/>
+      <RepeatAtSelectedDays actAtTheseDays={scheduleDataState.repeats} setActAtTheseDays={updateActAtTheseDays}/>
+
+      <Button variant="destructive" className="mt-auto">Usuń</Button>
+    </>
+  )
+}
+
+function DeviceActionTimeSettings() {
   const opts: ["user", "sunrise", "sunset"] = ["user", "sunrise", "sunset"];
   const [currentTimePickerOption, setCurrentTimePickerOption] = useState<typeof opts[number]>("user");
   const [beforeSelected, setBeforeSelected] = useState(true);
-  
+
   const titleSwitchCase = (val: typeof opts[number]) => {
     switch (val) {
       case "user":
@@ -27,13 +62,11 @@ export default function EditSchedule() {
         return "Invalid option"
     }
   }
-
   const handleClick = (val: typeof opts[number]) => {
     setCurrentTimePickerOption(val)
   }
 
   return (
-    <>
     <Card>
       <CardHeader>
         <CardTitle>
@@ -55,9 +88,6 @@ export default function EditSchedule() {
                                 : titleSwitchCase(item)}
                     </Button>
           })}
-          {/* <Button onClick={() => handleClick("user")} variant="outline" className="whitespace-pre-wrap h-auto shrink w-full font-thin py-0 px-1 min-h-9">Własne ustawienie</Button>
-          <Button onClick={() => handleClick("sunrise")} variant="outline" className="whitespace-pre-wrap h-auto shrink w-full font-thin py-0 px-1 min-h-9">Wschód słońca</Button>
-          <Button onClick={() => handleClick("sunset")} variant="outline" className="whitespace-pre-wrap h-auto shrink w-full font-thin py-0 px-1 min-h-9">Zachód słońca</Button> */}
         </div>
         <div className="">
           <TimePicker timeLeft={0} setTimeLeft={() => {}}/>
@@ -71,18 +101,23 @@ export default function EditSchedule() {
         </div>
       </CardContent>
     </Card>
-
-    <DeviceStateAfterTimeIsReached />
-    <RepeatAtSelectedDays />
-
-    <Button variant="destructive" className="mt-auto">Usuń</Button>
-    </>
   )
 }
 
-function DeviceStateAfterTimeIsReached() {
-  const deviceStates = ["Włączone", "Wyłączone", "Pojawienie się", "Zanikanie"]; 
-  const [deviceState, setDeviceState] = useState(deviceStates[0])
+function DeviceStateAfterTimeIsReached({deviceStateAfter, setDeviceStateAfter}: {deviceStateAfter: ExampleData["action"], setDeviceStateAfter: (val: ExampleData["action"]) => void}) {
+  const [deviceState, setDeviceState] = useState<ExampleData["action"]>(deviceStateAfter)
+  const deviceStates: ["turn-on", "turn-off"] = ["turn-on", "turn-off"]; // optional implementation "Pojawienie się", "Zanikanie"
+  
+  const translate = (val: ExampleData["action"]) => {
+    if (val === "turn-off") return "Wyłączone";
+    else if (val === "turn-on") return "Włączone";
+    else throw Error("Invalid arg org");
+  }
+
+  useEffect(() => {
+    setDeviceStateAfter(deviceState)
+  }, [deviceState])
+  
   return (
     <Card className="pb-0">
       <CardHeader>
@@ -90,7 +125,7 @@ function DeviceStateAfterTimeIsReached() {
           Urządzenie będzie
         </CardTitle>
         <CardDescription>
-          {deviceState}
+          {translate(deviceState)}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col px-0">
@@ -99,12 +134,12 @@ function DeviceStateAfterTimeIsReached() {
             <div  key={item} className="flex flex-col w-full">
               {/* <Button variant="outline" className={cn(item === "Zanikanie" ? "rounded-b-xl rounded-t-none" : "rounded-none", "border-none h-auto py-4 px-6 justify-start")}> */}
               <Button variant="outline"
-                      onClick={() => setDeviceState(item)} 
-                      className={cn(item === "Zanikanie" ? "rounded-b-xl rounded-t-none" : "rounded-none", "p-6 border-b-0 justify-between border-none")}>
-                {item}
+                      onClick={() => {console.log(item); setDeviceState(item)}} 
+                      className={cn(item === deviceStates[deviceStates.length - 1] ? "rounded-b-xl rounded-t-none" : "rounded-none", "p-6 border-b-0 justify-between border-none")}>
+                {translate(item)}
                 <div className={cn(deviceState !== item && "hidden")}><Check /></div>
               </Button>
-              <Separator className={cn(item === "Zanikanie" && "hidden")}></Separator>
+              <Separator className={cn(item === deviceStates[deviceStates.length - 1] && "hidden")}></Separator>
             </div>
           )
         })
@@ -114,16 +149,20 @@ function DeviceStateAfterTimeIsReached() {
   )
 }
 
-function RepeatAtSelectedDays() {
-  const [isSetAtTheseDays, setIsSetAtTheseDays] = useState([false, true, true, true, true, false, false]);
+function RepeatAtSelectedDays({actAtTheseDays, setActAtTheseDays}: {actAtTheseDays: ExampleData["repeats"], setActAtTheseDays: (arr: ExampleData["repeats"]) => void}) {
+  const [isSetAtTheseDays, setIsSetAtTheseDays] = useState(actAtTheseDays);
   const days = ["N", "P", "W", "Ś", "C", "P", "S"]
   const days2 = ["nd", "pon", "wt", "śr", "czw", "pt", "sob"];
 
   const handleClick = (idx: number) => {
     const a = isSetAtTheseDays;
     a[idx] = !isSetAtTheseDays[idx];
-    setIsSetAtTheseDays([...a]);
+    setIsSetAtTheseDays([...a] as FixedLengthArray);
   }
+
+  useEffect(() => {
+    setActAtTheseDays(isSetAtTheseDays)
+  }, [isSetAtTheseDays])
 
   return (
     <Card>
