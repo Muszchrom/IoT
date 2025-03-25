@@ -5,10 +5,10 @@ import Wrapper from "@/components/wrapper";
 import { ExampleData, FixedLengthArray } from "@/interfaces/schedule";
 import ScheduledAction from "../scheduled-action";
 import { Separator } from "../ui/separator";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TimePicker from "../time-picker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { cn } from "@/lib/utils";
+import { cn, pad } from "@/lib/utils";
 
 export default function EditSchedule({scheduleData, setScheduleData}: {scheduleData?: ExampleData, setScheduleData: (val: ExampleData) => void}) {
   const ifScheduleDataNotPresent: ExampleData = {
@@ -49,6 +49,14 @@ function DeviceActionTimeSettings() {
   const opts: ["user", "sunrise", "sunset"] = ["user", "sunrise", "sunset"];
   const [currentTimePickerOption, setCurrentTimePickerOption] = useState<typeof opts[number]>("user");
   const [beforeSelected, setBeforeSelected] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  const [timeSettingsHeader, setTimeSettingsHeader] = useState("Wykonanie akcji o godzinie 00:00") 
+  const [fastChangingTime, setFastChangingTime] = useState(0); // changing timeLeft => time-picker animations going baaad
+
+  const fun = (secs: number) => {
+    setFastChangingTime(secs);
+  }
 
   const titleSwitchCase = (val: typeof opts[number]) => {
     switch (val) {
@@ -66,6 +74,30 @@ function DeviceActionTimeSettings() {
     setCurrentTimePickerOption(val)
   }
 
+  useEffect(() => {
+    const hours = Math.floor(fastChangingTime / 3600);
+    const minutes = Math.floor((fastChangingTime % 3600) / 60);
+    const t = `${pad(hours)}:${pad(minutes)}`
+
+    const headerText = (() => {
+      switch (currentTimePickerOption) {
+        case "user":
+          return `Wykonanie akcji o godzinie ${t}`
+        case "sunrise":
+          return beforeSelected 
+                  ? `Wykonanie akcji ${t} przed wschodem słońca` 
+                  : `Wykonanie akcji ${t} po wschodzie słońca` 
+        case "sunset":
+          return beforeSelected 
+                  ? `Wykonanie akcji ${t} przed zachodem słońca` 
+                  : `Wykonanie akcji ${t} po zachodzie słońca` 
+        default:
+          return "Invalid option"
+      }
+    })();
+    setTimeSettingsHeader(headerText);
+  }, [fastChangingTime, currentTimePickerOption, beforeSelected])
+
   return (
     <Card>
       <CardHeader>
@@ -73,7 +105,7 @@ function DeviceActionTimeSettings() {
           {titleSwitchCase(currentTimePickerOption)}
         </CardTitle>
         <CardDescription>
-          Well, well, well opóźnienie wynosi:
+          {timeSettingsHeader}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -90,7 +122,7 @@ function DeviceActionTimeSettings() {
           })}
         </div>
         <div className="">
-          <TimePicker timeLeft={0} setTimeLeft={() => {}}/>
+          <TimePicker timeLeft={timeLeft} setTimeLeft={setTimeLeft} fun={fun}/>
           { currentTimePickerOption !== "user" && (
             <div className="flex flex-row gap-6 px-6">
               <Button variant={beforeSelected ? "secondary" : "outline"} onClick={() => setBeforeSelected(true)} className="shrink w-full font-thin py-0 px-1 min-h-9">Przed</Button>

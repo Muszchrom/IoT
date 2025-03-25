@@ -1,14 +1,15 @@
 'use client';
 import { Carousel, CarouselApi, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { pad } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 interface TimePickerProps {
   timeLeft: number,
   setTimeLeft: (val: number) => void,
+  fun?: (secs: number) => void
 }
 
-export default function TimePicker({timeLeft, setTimeLeft}: TimePickerProps) {
+export default function TimePicker({timeLeft, setTimeLeft, fun}: TimePickerProps) {
   const [hoursApi, setHoursApi] = useState<CarouselApi>();
   const [minutesApi, setMinutesApi] = useState<CarouselApi>();
 
@@ -25,6 +26,9 @@ export default function TimePicker({timeLeft, setTimeLeft}: TimePickerProps) {
   const CAROUSEL_ITEM_SIZE = 40;
 
   useEffect(() => {
+    if (fun) {
+      fun(hours * 3600 + minutes * 60)
+    }
     timeRef.current = {hours, minutes};
   }, [hours, minutes]);
 
