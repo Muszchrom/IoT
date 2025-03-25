@@ -72,7 +72,7 @@ export default function ScheduleModal({}: ScheduleModalProps) {
       </DialogTrigger>
 
       <DialogContent retrunButtonFunction={handleReturnFromEdit} className="overflow-auto w-screen h-full border-none rounded-none max-w-none sm:max-w-none flex flex-col gap-6 duration-0 min-w-sm">
-        <Wrapper className="min-h-full">
+        <Wrapper className="min-h-full px-0">
           <DialogHeader className="mb-6">
             <DialogTitle>Harmonogram</DialogTitle>
           </DialogHeader>

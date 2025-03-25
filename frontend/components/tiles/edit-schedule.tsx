@@ -210,7 +210,7 @@ function RepeatAtSelectedDays({actAtTheseDays, setActAtTheseDays}: {actAtTheseDa
       </CardHeader>
 
       <CardContent>
-        <div className="w-full flex justify-between">
+        <div className="w-full flex justify-between overflow-auto gap-2">
           {days.map((day, idx) => {
             return <Button variant="outline" 
                            className={cn(isSetAtTheseDays[idx] && "bg-yellow-300 text-background hover:bg-yellow-200 hover:text-background", "rounded-full aspect-square h-12 w-auto")} 
