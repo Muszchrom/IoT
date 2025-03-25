@@ -3,12 +3,11 @@ import PowerIndicator from "@/components/tiles/power-indicator";
 import Brightness from "@/components/tiles/brightness";
 import TimerModal from "@/components/tiles/timer-modal";
 import TurnOnOff from "@/components/tiles/turn-on-off";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CalendarPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import Wrapper from "@/components/wrapper";
 import ScheduleModal from "@/components/tiles/schedule-modal";
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function LightBulb() {
   const [isOn, setIsOn] = useState(false);
@@ -60,6 +59,9 @@ export default function LightBulb() {
 
   return (
     <Wrapper>
+      <Link href="/">
+        <ChevronLeft />
+      </Link>
       <PowerIndicator isOn={isOn}/>
       <TurnOnOff isOn={isOn} setIsOn={setIsOn}/>
       <Brightness />
