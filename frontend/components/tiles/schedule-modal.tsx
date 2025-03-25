@@ -4,17 +4,11 @@ import { CalendarPlus } from "lucide-react";
 import Wrapper from "@/components/wrapper";
 import { ExampleData } from "@/interfaces/schedule";
 import ScheduledAction from "../scheduled-action";
-import { Separator } from "../ui/separator";
-import { useEffect, useState } from "react";
-import TimePicker from "../time-picker";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { useState } from "react";
+import { Card } from "../ui/card";
 import EditSchedule from "./edit-schedule";
 
-interface ScheduleModalProps {
-
-}
-
-export default function ScheduleModal({}: ScheduleModalProps) {
+export default function ScheduleModal() {
   const exampleData: ExampleData[] = [
     {
       time: 21600, 
@@ -58,9 +52,13 @@ export default function ScheduleModal({}: ScheduleModalProps) {
     }
   }
 
-  useEffect(() => {
-    console.log(editPageDataIndex)
-  }, [editPageDataIndex])
+
+  // const ifScheduleDataNotPresent: ExampleData = {
+  //   time: 0,
+  //   auto: false,
+  //   action: "turn-on",
+  //   repeats: [false, false, false, false, false, false, false]
+  // }
 
   return (
     <Dialog>

@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+// import { useState } from "react";
 import Wrapper from "@/components/wrapper";
 import LightBulbSVG from "@/components/svg/light-bulb-svg";
 import Link from "next/link";
 
 export default function Home() {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  // const [socket, setSocket] = useState<WebSocket | null>(null);
   // const [messages, setMessages] = useState<string[]>([]);
 
 
