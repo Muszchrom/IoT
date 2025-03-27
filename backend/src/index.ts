@@ -1,36 +1,33 @@
 import express from "express";
-import { WebSocketServer, WebSocket } from "ws";
-import http from "http";
+import morgan from "morgan";
+import http from 'http';
+import createWSServer from "./ws-server";
 
 const app = express();
-const PORT = 8080;
-
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wsServer = createWSServer(server);
 
-wss.on("connection", (ws: WebSocket) => {
-  console.log("New WebSocket connection");
+app.use(morgan('dev'))
+app.use(express.json());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', process.env.ALLOW_ORIGIN)
+  res.header('Access-Control-Allow-Credentials', 'true')
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  )
+  res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET')
+  if (req.method === 'OPTIONS') res.sendStatus(200)
+  else next()
+})
 
-  ws.on("message", (message: Buffer) => {
-    const jsonString = message.toString("utf-8");
-    try {
-      const data = JSON.parse(jsonString);
-      console.log("Received:",data);
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
-    }
 
-    // send data to all connected clients
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  });
-
-  ws.on("close", () => console.log("WebSocket connection closed"));
+app.get('/api/', (req, res) => {
+  res.status(200).json({message: "Hello world!"});
 });
 
-server.listen(PORT, () => {
-    console.log(`Serwer działa na http://localhost:${PORT}`);
+
+server.listen(process.env.PORT, () => {
+  console.log(`Running on port ${process.env.PORT}`);
 });
+
