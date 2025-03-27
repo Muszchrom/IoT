@@ -23,7 +23,7 @@ export default function LightBulb() {
   // this is running timer stuff
   const [secondsLeft, setSecondsLeft] = useState(0);
 
-  const lastSentTime = useRef(0);
+  const debounceTimeout = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
     if (!isTimerCounting) return;
@@ -101,11 +101,7 @@ export default function LightBulb() {
 
   const adjustBrightness = async (brightness: number[]) => {
     setBrightness(brightness[0]);
-    const now = Date.now();
-    if (now - lastSentTime.current < 100) {
-      return;
-    }
-    lastSentTime.current = now;
+    
     const message: WsCommand = {
       type: "COMMAND",
       payload: {
@@ -114,9 +110,17 @@ export default function LightBulb() {
         value: brightness[0]
       }
     };
-    if (socket && socket.readyState == WebSocket.OPEN) {
-      socket.send(JSON.stringify(message));
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
     }
+
+    debounceTimeout.current = setTimeout(() => {
+      if (socket && socket.readyState == WebSocket.OPEN) {
+        socket.send(JSON.stringify(message));
+      }
+    }, 100);
+
   }
 
   return (
