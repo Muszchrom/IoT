@@ -1,6 +1,29 @@
 services:
-  range_frontend:
-    container_name: dev_frontend
+  database:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/redis_data:/data
+
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    ports:
+      - 8080:8080
+    environment:
+      - PORT=8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend/:/app
+      - /app/node_modules
+
+  frontend:
+    container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
