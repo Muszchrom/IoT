@@ -51,18 +51,18 @@ export default function LightBulb() {
   };
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080");
-    
+    const ws = new WebSocket("ws://localhost:8080?token=client");
+
     ws.onopen = () => {
       console.log("Connected to ws server");
       setSocket(ws);
     }
 
     ws.onmessage = async (event) => {
-      const data: WsStatus = JSON.parse(event.data);
+      const data: WsStatus["status"] = await JSON.parse(event.data);
       console.log("Received: ", data);
-      setIsOn(data.status.isOn);
-      setBrightness(data.status.brightnessLevel)
+      setIsOn(data.isOn);
+      setBrightness(data.brightnessLevel)
       // setMessages((prev) => [dataReceived, ...prev]);
     }
 
@@ -86,7 +86,7 @@ export default function LightBulb() {
 
   const turnOnTheLights = (turnOn: boolean) => {
     const message: WsCommand = {
-      type: "COMMAND",
+      type: "command",
       payload: {
         deviceId: "whatever",
         action: "turnOnOff",
@@ -103,7 +103,7 @@ export default function LightBulb() {
     setBrightness(brightness[0]);
     
     const message: WsCommand = {
-      type: "COMMAND",
+      type: "command",
       payload: {
         deviceId: "whatever",
         action: "setBrightness",

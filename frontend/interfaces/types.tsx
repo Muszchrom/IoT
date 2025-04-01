@@ -1,7 +1,7 @@
 type WsMessage = WsCommand | WsError | WsStatus
 
 type WsCommand = {
-  type: "COMMAND",
+  type: "command",
   payload: {
     deviceId: string,
     action: "turnOnOff" | "setBrightness" | "balacedBrightness",
@@ -10,12 +10,12 @@ type WsCommand = {
 }
 
 type WsError = {
-  type: 'ERROR',
+  type: 'error',
   message: string
 }
 
 type WsStatus = {
-  type: 'STATUS',
+  type: 'status',
   status: {
     deviceId: string,
     isOn: boolean,
