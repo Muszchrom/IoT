@@ -1,72 +1,53 @@
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import { Server } from 'http';
-import { WsCommand, WsError, WsMessage, WsStatus } from './websocket-schema';
+import { WsCommand, WsError, WsStatus } from './websocket-types';
+import { parse } from 'url';
+import { messageHandlers } from './ws/message-handlers';
+
+export const activeConnections = new Map<"device" | "client", WebSocket>()
 
 export default function createWSServer(httpServer: Server) {
   const wss = new WebSocketServer({server: httpServer});
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
+    console.log(`${req.socket.remoteAddress} ${req.socket.remotePort} connected`)
+    // verify user/device webtokens here
+    // jwt would have user/device id
+    const query = parse(req.url || "", true).query;
+    const token = query.token as string;
+    if (token === "client") {
+      activeConnections.set("client", ws);
+      // send initial device status
+    } else if (token === "device") {
+      activeConnections.set("device", ws);
+    } else {
+      ws.close(1008, "Invalid token");
+    }
+
     ws.on('message', (message) => {
       try {
-        const parsed: WsMessage = JSON.parse(message.toString());
-  
-        if (!parsed.type) {
-          throw new Error('Invalid message format');
-        }
-  
-        switch (parsed.type) {
-          case 'COMMAND':
-            return commandHandler(parsed, (message) => ws.send(JSON.stringify(message)))
-          default:
-            console.log('Unhandled message type:', parsed.type);
+        const parsed: WsCommand | WsStatus | WsError = JSON.parse(message.toString());
+        // console.log(parsed)
+        if (!parsed.type) throw new Error('Invalid message format');
+
+        if (parsed.type === "command") {
+          const handler = messageHandlers.command;
+          handler(ws, parsed);
+        } else if (parsed.type === "status") {
+          const handler = messageHandlers.status;
+          handler(ws, parsed);
+        } else if (parsed.type === "error") {
+          const handler = messageHandlers.error;
+          handler(ws, parsed)
+        } else {
+          console.warn("Unsupported message type:", parsed);
         }
       } catch (err) {
         console.error('WS Error:', err);
-        const message: WsError = {
-          type: "ERROR",
-          message: err instanceof Error ? err.message : "Unidentified error"
-        };
-        ws.send(JSON.stringify(message));
+        ws.send(JSON.stringify({message: "An error occured", err: err}));
       }
     });
   });
-
-  const commandHandler = (command: WsCommand, cb: (status: WsStatus | WsError) => void) => {
-    const deviceStatus: WsStatus = {
-      type: "STATUS",
-      status: {
-        deviceId: "HelloFromExpress",
-        isOn: false,
-        brightnessLevel: 0,
-        balancedBrightness: false
-      }
-    };
-
-    switch (command.payload.action) {
-      case "turnOnOff":
-        deviceStatus.status.balancedBrightness = false;
-        deviceStatus.status.brightnessLevel = 100;
-        deviceStatus.status.isOn = !!command.payload.value;
-        return cb(deviceStatus);
-      case "setBrightness":
-        deviceStatus.status.balancedBrightness = false;
-        deviceStatus.status.brightnessLevel = command.payload.value;
-        deviceStatus.status.isOn = !!command.payload.value;
-        return cb(deviceStatus);
-      case "balacedBrightness":
-        deviceStatus.status.balancedBrightness = !!command.payload.value;
-        deviceStatus.status.brightnessLevel = 79;
-        deviceStatus.status.isOn = !!command.payload.value;
-        return cb(deviceStatus);
-      default:
-        const err: WsError = {
-          type: "ERROR",
-          message: "Unsupported action"
-        };
-        return cb(err);
-    }
-  }
-
   return wss;
 }
 
