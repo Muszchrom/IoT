@@ -65,10 +65,30 @@ class WebsocketUtils(usocket.socket):
             return decoded.decode()
         else:
             return data[offset:offset+payload_len].decode()
-
-
-
-
-
-
     
+    def send_websocket_message(self, message):
+        encoded_msg = message.encode('utf-8')
+        msg_len = len(encoded_msg)
+        frame = bytearray()
+        frame.append(0x81)  # FIN + opcode for text frame
+
+        if msg_len <= 125:
+            frame.append(0x80 | msg_len)  # Masked + length
+        elif msg_len < 65536:
+            frame.append(0x80 | 126)
+            frame.extend(msg_len.to_bytes(2, 'big'))
+        else:
+            frame.append(0x80 | 127)
+            frame.extend(msg_len.to_bytes(8, 'big'))
+
+        mask = urandom.getrandbits(32).to_bytes(4, 'big')
+        frame.extend(mask)
+
+        masked_data = bytearray(msg_len)
+        for i in range(msg_len):
+            masked_data[i] = encoded_msg[i] ^ mask[i % 4]
+        frame.extend(masked_data)
+        
+        self.send(frame)
+    
+
