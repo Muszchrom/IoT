@@ -5,7 +5,7 @@ import createWSServer from "./ws-server";
 
 const app = express();
 const server = http.createServer(app);
-const wsServer = createWSServer(server);
+createWSServer(server);
 
 app.use(morgan('dev'))
 app.use(express.json());

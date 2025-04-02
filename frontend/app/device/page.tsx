@@ -46,7 +46,23 @@ export default function LightBulb() {
     setSecondsLeft(timerValue)
   }, [isTimerCounting, timerValue])
 
-  const startCounter = () => {
+  const startCounter = (action: "turnOnOff", value: number) => {
+    const message = {
+      type: "timer",
+      action: "set",
+      initDelay: timerValue,
+      commands: [{
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: action,
+          value: value
+        }
+      }]
+    }
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message)); 
+    }
     setIsTimerCounting(true)
   };
 
@@ -88,7 +104,7 @@ export default function LightBulb() {
     const message: WsCommand = {
       type: "command",
       payload: {
-        deviceId: "whatever",
+        deviceId: "device",
         action: "turnOnOff",
         value: turnOn ? 1 : 0
       }
@@ -105,7 +121,7 @@ export default function LightBulb() {
     const message: WsCommand = {
       type: "command",
       payload: {
-        deviceId: "whatever",
+        deviceId: "device",
         action: "setBrightness",
         value: brightness[0]
       }

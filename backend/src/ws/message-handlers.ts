@@ -7,7 +7,7 @@ import { errorHandlers } from "./error-handlers";
 export const messageHandlers = {
   command: (ws: WebSocket, data: WsCommand) => {
     const handler = commandHandlers[data.payload.action];
-    if (handler) handler(ws, data.payload);
+    if (handler) handler(data.payload);
     else throw new Error(`Unsupported handler for action: ${data.payload.action}`);
   },
   status: (ws: WebSocket, data: WsStatus) => {

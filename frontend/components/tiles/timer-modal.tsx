@@ -13,7 +13,7 @@ interface TimerModalProps {
   timeLeft: number,
   setTimeLeft: ((val: number) => void),
   isCounting: boolean,
-  startCounter: () => void,
+  startCounter: (action: "turnOnOff", value: number) => void,
   stopCounter: (cancel?: boolean) => void,
   initialCounterValue: number,
   currentCounterValue: number,
@@ -25,7 +25,7 @@ export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCoun
     if (isCounting) {
       stopCounter(true);
     } else {
-      startCounter();
+      startCounter("turnOnOff", turnOnDevice ? 1 : 0);
     }
   }
 
