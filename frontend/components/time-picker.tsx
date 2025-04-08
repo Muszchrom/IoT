@@ -4,19 +4,19 @@ import { pad } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
 interface TimePickerProps {
-  timeLeft: number,
-  setTimeLeft: (val: number) => void,
+  selectedTimeInSeconds: number,
+  setSelectedTimeInSeconds: (val: number) => void,
   fun?: (secs: number) => void
 }
 
-export default function TimePicker({timeLeft, setTimeLeft, fun}: TimePickerProps) {
+export default function TimePicker({selectedTimeInSeconds, setSelectedTimeInSeconds, fun}: TimePickerProps) {
   const [hoursApi, setHoursApi] = useState<CarouselApi>();
   const [minutesApi, setMinutesApi] = useState<CarouselApi>();
 
   const [x, y] = ((t) => {
     const tInMins = t/60;
     return [(tInMins - tInMins % 60)/60, tInMins % 60]
-  })(timeLeft);
+  })(selectedTimeInSeconds);
 
   const [hours, setHours] = useState(x)
   const [minutes, setMinutes] = useState(y)
@@ -33,8 +33,8 @@ export default function TimePicker({timeLeft, setTimeLeft, fun}: TimePickerProps
   }, [hours, minutes]);
 
   useEffect(() => {
-    return () => setTimeLeft(timeRef.current.hours * 3600 + timeRef.current.minutes * 60);
-  }, [setTimeLeft]);
+    return () => setSelectedTimeInSeconds(timeRef.current.hours * 3600 + timeRef.current.minutes * 60);
+  }, [setSelectedTimeInSeconds]);
 
   useEffect(() => {
     if (!hoursApi) return;
