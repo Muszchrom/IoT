@@ -10,10 +10,31 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { WsCommand, WsStatus } from "@/interfaces/types";
 
+type LightBulbTimer = {
+  startedAt: number,
+  initDelay: number
+}
+
+type LightBulbState = {
+  deviceId: string,
+  isOn: boolean,
+  brightnessLevel: number,
+  balancedBrightness: boolean,
+  timer: LightBulbTimer | null,
+  schedule: null,
+} 
+
 export default function LightBulb() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [isOn, setIsOn] = useState(false);
-  const [brightness, setBrightness] = useState(12);
+  const [lightBulb, setLightBulb] = useState<LightBulbState>({
+    deviceId: "device",
+    isOn: false,
+    brightnessLevel: 90,
+    balancedBrightness: false,
+    timer: null,
+    schedule: null
+  })
+
   /**  
    * original time set by timer, dont use it in COUNTING CIRCLE TIMER, 
    *  its used as a variable which holds time set by user for timer in seconds 
@@ -66,6 +87,7 @@ export default function LightBulb() {
     setIsTimerCounting(true)
   };
 
+  // ws initializer
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8080?token=client");
 
@@ -77,9 +99,9 @@ export default function LightBulb() {
     ws.onmessage = async (event) => {
       const data: WsStatus["status"] = await JSON.parse(event.data);
       console.log("Received: ", data);
-      setIsOn(data.isOn);
-      setBrightness(data.brightnessLevel)
-      // setMessages((prev) => [dataReceived, ...prev]);
+      lightBulb.isOn = data.isOn;
+      lightBulb.brightnessLevel = data.brightnessLevel;
+      setLightBulb({...lightBulb});
     }
 
     ws.onclose = () => {
@@ -101,6 +123,10 @@ export default function LightBulb() {
   }
 
   const turnOnTheLights = (turnOn: boolean) => {
+    // optimistic state change
+    lightBulb.isOn = turnOn;
+    setLightBulb({...lightBulb});
+
     const message: WsCommand = {
       type: "command",
       payload: {
@@ -112,11 +138,12 @@ export default function LightBulb() {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(message)); 
     }
-    setIsOn(turnOn);
   }
 
   const adjustBrightness = async (brightness: number[]) => {
-    setBrightness(brightness[0]);
+    // optimistic state change
+    lightBulb.brightnessLevel = brightness[0];
+    setLightBulb({...lightBulb});
     
     const message: WsCommand = {
       type: "command",
@@ -144,9 +171,9 @@ export default function LightBulb() {
       <Link href="/">
         <ChevronLeft />
       </Link>
-      <PowerIndicator isOn={isOn}/>
-      <TurnOnOff isOn={isOn} setIsOn={turnOnTheLights}/>
-      <Brightness brightness={brightness} setBrightness={adjustBrightness}/>
+      <PowerIndicator isOn={lightBulb.isOn}/>
+      <TurnOnOff isOn={lightBulb.isOn} setIsOn={turnOnTheLights}/>
+      <Brightness brightness={lightBulb.brightnessLevel} setBrightness={adjustBrightness}/>
 
       <div className="flex flex-col w-full">
         <div className="flex w-full gap-2">
