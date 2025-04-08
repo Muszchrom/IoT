@@ -24,8 +24,5 @@ timerQueue.process(async (job) => {
       return;
     }
     await redis.publish("ws-messages", JSON.stringify(command));
-    // delete below
-    // console.log(`Performing command: ${JSON.stringify(command)}`);
-    // commandHandlers[command.payload.action](command.payload);
   });
 });
