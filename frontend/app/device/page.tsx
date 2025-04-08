@@ -8,14 +8,16 @@ import Wrapper from "@/components/wrapper";
 import ScheduleModal from "@/components/tiles/schedule-modal";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { WsCommand, WsStatus } from "@/interfaces/types";
+import { WsCommand, WsStatus, WsTimer } from "@/interfaces/types";
 
-type LightBulbTimer = {
+export type LightBulbTimer = {
   startedAt: number,
-  initDelay: number
+  initDelay: number,
+  timerId?: string | number,
+  commands: WsCommand[]
 }
 
-type LightBulbState = {
+export type LightBulbState = {
   deviceId: string,
   isOn: boolean,
   brightnessLevel: number,
@@ -26,6 +28,7 @@ type LightBulbState = {
 
 export default function LightBulb() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const debounceTimeout = useRef<NodeJS.Timeout>(null);
   const [lightBulb, setLightBulb] = useState<LightBulbState>({
     deviceId: "device",
     isOn: false,
@@ -34,58 +37,6 @@ export default function LightBulb() {
     timer: null,
     schedule: null
   })
-
-  /**  
-   * original time set by timer, dont use it in COUNTING CIRCLE TIMER, 
-   *  its used as a variable which holds time set by user for timer in seconds 
-   */
-  const [timerValue, setTimerValue] = useState(60); 
-  const [isTimerCounting, setIsTimerCounting] = useState(false);
-  // this is running timer stuff
-  const [secondsLeft, setSecondsLeft] = useState(0);
-
-  const debounceTimeout = useRef<NodeJS.Timeout>(null);
-
-  useEffect(() => {
-    if (!isTimerCounting) return;
-    if (secondsLeft <= 0) return stopCounter();
-    const intervalId = setInterval(() => {
-      setSecondsLeft((secs) => secs - 1);
-    }, 1000);
-    return () => clearInterval(intervalId);
-
-  }, [secondsLeft, isTimerCounting])
-
-  /** these two (useEffect and startCounter) are dependant on eachother 
-   * so that secondsLeft updates properly. time-picker.tsx which sets timerValue
-   * updates this state only on unmount (it has to be that way or else we're causing
-   * a lot of rerenders and animations break). This behavior resulted in 
-   * secondsLeft being late 1 state update. I've included this useEffect to update
-   * secondsLeft only after isTimerCounting changes. Seems to work properly.
-   */
-  useEffect(() => {
-    setSecondsLeft(timerValue)
-  }, [isTimerCounting, timerValue])
-
-  const startCounter = (action: "turnOnOff", value: number) => {
-    const message = {
-      type: "timer",
-      action: "set",
-      initDelay: timerValue,
-      commands: [{
-        type: "command",
-        payload: {
-          deviceId: "device",
-          action: action,
-          value: value
-        }
-      }]
-    }
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message)); 
-    }
-    setIsTimerCounting(true)
-  };
 
   // ws initializer
   useEffect(() => {
@@ -97,10 +48,23 @@ export default function LightBulb() {
     }
 
     ws.onmessage = async (event) => {
-      const data: WsStatus["status"] = await JSON.parse(event.data);
+      const data: WsStatus | WsTimer = await JSON.parse(event.data);
       console.log("Received: ", data);
-      lightBulb.isOn = data.isOn;
-      lightBulb.brightnessLevel = data.brightnessLevel;
+      if (data.type === "status") {
+        lightBulb.isOn = data.status.isOn;
+        lightBulb.brightnessLevel = data.status.brightnessLevel;
+      } else if (data.type === "timer") {
+        switch (data.action) {
+          case "set":
+            if (!data.jobId || !lightBulb.timer) return;
+            lightBulb.timer.timerId = data.jobId;
+          case "del":
+            if (data.currentDelay !== -404) return;
+            lightBulb.timer = null;
+          default:
+            return;
+        }
+      }
       setLightBulb({...lightBulb});
     }
 
@@ -110,17 +74,6 @@ export default function LightBulb() {
 
     return () => ws.close();
   }, [])
- 
-  const stopCounter = (cancel?: boolean) => {
-    setSecondsLeft(0);
-    if (cancel) { // so basically if you press a cancel button
-      setIsTimerCounting(false);
-    }
-    else { // if counting is finished, perform action
-      console.log("Performing action ...")
-      setIsTimerCounting(false); 
-    }
-  }
 
   const turnOnTheLights = (turnOn: boolean) => {
     // optimistic state change
@@ -140,7 +93,7 @@ export default function LightBulb() {
     }
   }
 
-  const adjustBrightness = async (brightness: number[]) => {
+  const adjustBrightness = (brightness: number[]) => {
     // optimistic state change
     lightBulb.brightnessLevel = brightness[0];
     setLightBulb({...lightBulb});
@@ -166,6 +119,64 @@ export default function LightBulb() {
 
   }
 
+  const handleTimer = (turnOn: boolean, delayInSeconds: number, stop?: boolean) => {
+    if (stop) {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          type: "timer",
+          action: "del",
+          jobId: lightBulb.timer?.timerId
+        }))
+      }
+
+      // can not be optimistic, since this WS message above needs timer Id
+      lightBulb.timer = null;
+      setLightBulb({...lightBulb});
+      return;
+    }
+
+    const newTimer: LightBulbTimer = {
+      startedAt: Date.now(),
+      initDelay: delayInSeconds,
+      commands: [{
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: turnOn ? 1 : 0
+        }
+      }]
+    };
+    lightBulb.timer = newTimer;
+    setLightBulb({...lightBulb});
+
+    const message = {
+      type: "timer",
+      action: "set",
+      initDelay: newTimer.initDelay,
+      commands: [{
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: newTimer.commands[0].payload.value
+        }
+      }]
+    }
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message)); 
+    }
+  }
+
+  // prevent timer from counting below zero
+  // think someday about solution to which this function refers to
+  // and then delete it
+  const emergencyTimerStop = () => {
+    lightBulb.timer = null;
+    setLightBulb({...lightBulb})
+  }
+
   return (
     <Wrapper>
       <Link href="/">
@@ -177,13 +188,7 @@ export default function LightBulb() {
 
       <div className="flex flex-col w-full">
         <div className="flex w-full gap-2">
-          <TimerModal timeLeft={timerValue} 
-                      setTimeLeft={setTimerValue} 
-                      isCounting={isTimerCounting} 
-                      startCounter={startCounter}
-                      stopCounter={stopCounter}
-                      initialCounterValue={timerValue}
-                      currentCounterValue={secondsLeft} />
+          <TimerModal timerData={lightBulb.timer} setTimerData={handleTimer} emergencyStopFunction={emergencyTimerStop}/>
           <ScheduleModal />
         </div>
       </div>

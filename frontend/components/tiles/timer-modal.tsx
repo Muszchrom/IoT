@@ -8,24 +8,23 @@ import { Check, Timer } from "lucide-react";
 import { useState } from "react";
 import CountdownCircleTimer from "../countdown-circle-timer";
 import Wrapper from "../wrapper";
+import { LightBulbState } from "@/app/device/page";
 
 interface TimerModalProps {
-  timeLeft: number,
-  setTimeLeft: ((val: number) => void),
-  isCounting: boolean,
-  startCounter: (action: "turnOnOff", value: number) => void,
-  stopCounter: (cancel?: boolean) => void,
-  initialCounterValue: number,
-  currentCounterValue: number,
+  timerData: LightBulbState["timer"],
+  setTimerData: (turnOn: boolean, delayInSeconds: number, stop?: boolean) => void,
+  emergencyStopFunction: () => void
 }
 
-export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCounter, stopCounter, initialCounterValue, currentCounterValue}: TimerModalProps) {
-  const [turnOnDevice, setTurnOnDevice] = useState(false);
+export default function TimerModal({timerData, setTimerData, emergencyStopFunction}: TimerModalProps) {
+  const [selectedDelay, setSelectedDelay] = useState(60);
+  const [turnOnDevice, setTurnOnDevice] = useState(true);
+
   const handleStartStop = () => {
-    if (isCounting) {
-      stopCounter(true);
+    if (!timerData) {
+      setTimerData(turnOnDevice, selectedDelay)
     } else {
-      startCounter("turnOnOff", turnOnDevice ? 1 : 0);
+      setTimerData(turnOnDevice, selectedDelay, true);
     }
   }
 
@@ -44,13 +43,13 @@ export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCoun
             <DialogTitle>Minutnik</DialogTitle>
           </DialogHeader>
 
-          {isCounting ? (
-            <CountdownCircleTimer initValue={initialCounterValue} currentValue={currentCounterValue} />
+          {timerData ? (
+            <CountdownCircleTimer initDelayInSeconds={timerData.initDelay} initTimestamp={timerData.startedAt} emergencyStopFunction={emergencyStopFunction}/>
           ) : (
             <>
             <Card>
               <CardHeader>
-                <TimePicker timeLeft={timeLeft} setTimeLeft={setTimeLeft}/>
+                <TimePicker selectedTimeInSeconds={selectedDelay} setSelectedTimeInSeconds={setSelectedDelay}/>
               </CardHeader>
             </Card>
 
@@ -70,10 +69,10 @@ export default function TimerModal({timeLeft, setTimeLeft, isCounting, startCoun
 
           <DialogFooter className="mt-auto flex-row items-center">
             <div>
-              {isCounting && (turnOnDevice ? "Włączy urządzenie" : "Wyłączy urządzenie")}
+              {!!timerData && (turnOnDevice ? "Włączy urządzenie" : "Wyłączy urządzenie")}
             </div>
-            <Button variant={isCounting ? "destructive" : "default"} className="ml-auto font-bold px-8" onClick={handleStartStop}>
-              {isCounting ? "stop" : "Start"}
+            <Button variant={!!timerData ? "destructive" : "default"} className="ml-auto font-bold px-8" onClick={handleStartStop}>
+              {!!timerData ? "stop" : "Start"}
             </Button>
           </DialogFooter>
         </Wrapper>

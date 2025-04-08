@@ -24,4 +24,13 @@ type WsStatus = {
   }
 }
 
-export type {WsMessage, WsCommand, WsStatus, WsError}
+type WsTimer = {
+  type: "timer",
+  action: "set" | "get" | "del",
+  initDelay?: number, // in seconds
+  currentDelay?: number, // current status of timer, if < 0 then its deleted
+  jobId?: string | number,
+  commands?: WsCommand[] // commands that will be performed
+}
+
+export type {WsMessage, WsCommand, WsStatus, WsError, WsTimer}
