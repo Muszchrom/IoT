@@ -12,7 +12,7 @@ export const messageHandlers = {
   },
   status: (ws: WebSocket, data: WsStatus) => {
     const handler = statusHandlers["default"];
-    handler(ws, data.status); // no checking, key hardcoded
+    handler(ws, data); // no checking, key hardcoded
   },
   error: (ws: WebSocket, data: WsError) => {
     const handler = errorHandlers["default"];
