@@ -4,12 +4,16 @@ import Wrapper from "@/components/wrapper";
 import LightBulbSVG from "@/components/svg/light-bulb-svg";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { ModeToggle } from "@/components/theme-picker";
 
 export default function Home() {
   return (
     <div className="min-h-screen min-w-screen font-[family-name:var(--font-geist-sans)] flex flex-col">
       <Wrapper>
-        <h1 className="text-2xl font-bold tracking-wide">OpenLights</h1>
+        <div className="flex justify-between mb-4">
+          <h1 className="text-2xl font-bold tracking-wide">OpenLights</h1>
+          <ModeToggle />
+        </div>
         <div className="flex flex-col gap-2">
           <span className="text-muted-foreground">Podłączone urządzenia</span>
           <Link href="/device" className="bg-card text-card-foreground inline-flex gap-2 rounded-xl border py-6 px-4 shadow-sm">
