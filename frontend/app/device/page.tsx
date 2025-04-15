@@ -9,6 +9,7 @@ import ScheduleModal from "@/components/tiles/schedule-modal";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { WsCommand, WsStatus, WsTimer } from "@/interfaces/types";
+import AutoBrightness from "@/components/tiles/auto-brightness";
 
 export type LightBulbTimer = {
   startedAt: number,
@@ -184,6 +185,7 @@ export default function LightBulb() {
       </Link>
       <PowerIndicator isOn={lightBulb.isOn}/>
       <TurnOnOff isOn={lightBulb.isOn} setIsOn={turnOnTheLights}/>
+      <AutoBrightness brightness={lightBulb.brightnessLevel} setBrightness={adjustBrightness}></AutoBrightness>
       <Brightness brightness={lightBulb.brightnessLevel} setBrightness={adjustBrightness}/>
 
       <div className="flex flex-col w-full">
