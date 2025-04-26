@@ -18,6 +18,7 @@ services:
       - PORT=8080
       - REDIS_HOST=database
       - REDIS_PORT=6379
+      - ALLOW_ORIGIN=http://localhost:3000
     volumes:
       - ./backend/:/app
       - /app/node_modules
