@@ -15,6 +15,11 @@ export const commandHandlers: Record<WsCommand["payload"]["action"], CommandHand
     if (!wsDevice) return;
     wsDevice.send(JSON.stringify(data));
   },
+  getStatus: async (data) => {
+    const wsDevice = activeConnections.get(data.deviceId);
+    if (!wsDevice) return;
+    wsDevice.send(JSON.stringify(data))
+  },
   balancedBrightness: async () => {
   
   }

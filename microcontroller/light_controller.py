@@ -59,6 +59,9 @@ def handle_message(message, send_message):
         data = ujson.loads(message)
         # print("Parsed JSON:", data)
         data["action"]
+        if data["action"] == "getStatus":
+            send_message(ujson.dumps(device_status))
+            return
         
         actions[data["action"]](data["value"])
         send_message(ujson.dumps(device_status))

@@ -9,11 +9,22 @@ type WsTimer = {
   commands?: WsCommand[] // commands that will be performed
 }
 
+type WsSchedule = {
+  type: "schedule",
+  action: "set" | "get" | "del" | "edit",
+  active: "boolean", // is this job disabled
+  execReferenceTime: "currentTime" | "sunrise" | "sunset"
+  execTimeInMinutes?: number, // hours and minutes in single variable, could be negative which means run before sunset/sunrise
+  repeatAtDays?: number[], // 0 - 6 / sun-sat
+  jobId?: string | number,
+  commands?: WsCommand[] // commands that will be performed
+}
+
 type WsCommand = {
   type: "command",
   payload: {
     deviceId: string,
-    action: "turnOnOff" | "setBrightness" | "balancedBrightness",
+    action: "turnOnOff" | "setBrightness" | "balancedBrightness" | "getStatus",
     value: number 
   }
 }
@@ -29,8 +40,9 @@ type WsStatus = {
     deviceId: string,
     isOn: boolean,
     brightnessLevel: number,
-    balancedBrightness: boolean
+    balancedBrightness: boolean,
+    balancedBrightnessLevel: number
   }
 }
 
-export { WsMessage, WsError, WsCommand, WsStatus, WsTimer }
+export { WsMessage, WsError, WsCommand, WsStatus, WsTimer, WsSchedule }

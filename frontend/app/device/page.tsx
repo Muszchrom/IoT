@@ -10,6 +10,7 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { WsCommand, WsStatus, WsTimer } from "@/interfaces/types";
 import AutoBrightness from "@/components/tiles/auto-brightness";
+import { toast } from "sonner";
 
 export type LightBulbTimer = {
   startedAt: number,
@@ -44,7 +45,22 @@ export default function LightBulb() {
     const ws = new WebSocket("ws://localhost:8080?token=client");
 
     ws.onopen = () => {
+      toast.success("Połączono z serwerem WebSocket");
       console.log("Connected to ws server");
+      const message: WsCommand = {
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: 0
+        }
+      };
+      const timerInfoMessage = {
+        type: "timer",
+        action: "get"
+      }
+      ws.send(JSON.stringify(message));
+      ws.send(JSON.stringify(timerInfoMessage))
       setSocket(ws);
     }
 
@@ -56,6 +72,16 @@ export default function LightBulb() {
         lightBulb.brightnessLevel = data.status.brightnessLevel;
       } else if (data.type === "timer") {
         switch (data.action) {
+          case "get":
+            if (!data.currentDelay) return;
+            const x: LightBulbTimer = {
+              startedAt: data.currentDelay || 0,
+              initDelay: data.initDelay || 0,
+              commands: data.commands || [],
+              timerId: data.jobId
+            } 
+            lightBulb.timer = x;
+            setLightBulb({...lightBulb});
           case "set":
             if (!data.jobId || !lightBulb.timer) return;
             lightBulb.timer.timerId = data.jobId;
@@ -70,6 +96,7 @@ export default function LightBulb() {
     }
 
     ws.onclose = () => {
+      toast.error("Rozłączono z serwerem WebSocket");
       console.log("Disconnected from ws server");
     }
 
