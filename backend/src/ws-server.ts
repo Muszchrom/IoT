@@ -6,7 +6,6 @@ import { messageHandlers } from './ws/message-handlers';
 import { timerJobs } from './queue/timer-jobs';
 import { Redis } from "ioredis";
 import { commandHandlers } from './ws/command-handlers';
-import { v4 } from 'uuid';
 
 if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) throw new Error("No REDIS_HOST and REDIS_PORT in env vars");
 const redisSubscriber = new Redis(parseInt(process.env.REDIS_PORT), process.env.REDIS_HOST);
@@ -21,16 +20,30 @@ redisSubscriber.on("message", (channel, message) => {
   }
 })
 
+type WsExtended = WebSocket & {
+  isAlive?: boolean,
+  token?: string,
+  remoteAddress?: string,
+  remotePort?: number
+}
+
 export default function createWSServer(httpServer: Server) {
   const wss = new WebSocketServer({server: httpServer});
 
-  wss.on('connection', async (ws, req) => {
-    console.log(`${req.socket.remoteAddress} ${req.socket.remotePort} connected`)
+  wss.on('connection', async (ws: WsExtended, req) => {
     // verify user/device webtokens here
     // jwt would have user/device id
     const query = parse(req.url || "", true).query;
     const token = query.token as string;
     if (token !== "client" && token !== "device") return ws.close(1008, "Invalid token");
+    
+    ws.isAlive = true;
+    ws.token = token;
+    ws.remoteAddress = req.socket.remoteAddress;
+    ws.remotePort = req.socket.remotePort;
+
+    console.log(`${ws.remoteAddress} ${ws.remotePort} connected`)
+
     activeConnections.set(token, ws);
     redisClient.hset("activeConnections", token, process.pid.toString());
 
@@ -59,11 +72,36 @@ export default function createWSServer(httpServer: Server) {
       }
     });
 
-    ws.on('close', async () => {
-      activeConnections.delete(token);
-      redisClient.hdel("activeConnections", token);
+    ws.on('pong', () => {
+      ws.isAlive = true;
+      console.log("PONG")
     })
   });
+
+  const interval = setInterval(function ping() {
+    wss.clients.forEach(function each(ws: WsExtended) {
+      if (ws.isAlive === false) {
+        ws.terminate();
+        if (!ws.token) return console.warn("No token in ws!");
+        activeConnections.delete(ws.token);
+        redisClient.hdel("activeConnections", ws.token);
+        return;
+      }
+  
+      ws.isAlive = false;
+      ws.ping();
+      console.log("PING")
+    });
+  }, 1000);
+
+  wss.on('close', async (ws: WsExtended) => {
+    console.log(`${ws.remoteAddress} ${ws.remotePort} disconnected`);
+    if (!ws.token) return console.warn("No token in ws!");
+    activeConnections.delete(ws.token);
+    redisClient.hdel("activeConnections", ws.token);
+    clearInterval(interval);
+  })
+
   return wss;
 }
 

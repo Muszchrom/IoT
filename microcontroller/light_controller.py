@@ -12,7 +12,8 @@ device_status = {
         "deviceId": "device",
         "isOn": False,
         "brightnessLevel": 60,
-        "balancedBrightness": False
+        "balancedBrightness": False,
+        "balancedBrightnessLevel": 300
     }
 }
 
@@ -42,7 +43,6 @@ def set_brightness(value):
       raise Exception("Invalid setBrightness value") 
 
 
-# Requires light sensor
 def balanced_brightness(value):
     raise Exception("Action unsupported")
 

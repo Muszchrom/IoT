@@ -9,10 +9,12 @@ class WebsocketUtils(usocket.socket):
         self.ws_host = ws_host
         self.ws_port = ws_port
         self.ws_path = ws_path
-
+        self.connect()
+    
+    def connect(self):
         super().connect(usocket.getaddrinfo(self.ws_host, self.ws_port)[0][-1])
         self.__websocket_handshake()  # Perform WebSocket handshake
-        
+    
     # Function to generate WebSocket key
     def __generate_websocket_key(self):
         random_bytes = urandom.getrandbits(16).to_bytes(16, 'big')
@@ -35,7 +37,6 @@ class WebsocketUtils(usocket.socket):
         response = self.recv(4096)
         if b"101 Switching Protocols" not in response:
             raise Exception("WebSocket handshake failed")
-        
         
     # Function to decode WebSocket frames
     def decode_websocket_frame(self, data):
@@ -91,4 +92,12 @@ class WebsocketUtils(usocket.socket):
         
         self.send(frame)
     
+    # reply to websocket ping 
+    def send_pong(self):
+        frame = bytearray()
+        frame.append(0x8A)  # fin + pong opcode
+        frame.append(0x80 | 0)  # mask + payload length 0 => 10000000 | 00000000 = 10000000
+        mask = urandom.getrandbits(32).to_bytes(4, 'big')
+        frame.extend(mask)
+        self.send(frame)
 
