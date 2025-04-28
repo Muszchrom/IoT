@@ -1,5 +1,5 @@
 from wifi import connect_to_wifi
-from light_controller import handle_message
+from light_controller import LightController
 from websocket_utils import WebsocketUtils
 import time
 
@@ -9,8 +9,41 @@ WS_PORT = 8080
 WS_PATH = "/?token=device"
 RECONNECT_TIMEOUT_SECONDS = 3
 
-# Main function
+# This function connects pico with ws server
+# This function will reconnect if conditions are met
+# i == -1 - connecting for the first time
+def connect_reconnect_ws(i, i_threshold, s, lc):
+    if i > i_threshold or i == -1:
+        lc.set_ws_indicator(False)
+        if i == -1:  # connecting for the first time 
+            print("Connecting to websocket server...")
+        else:
+            s.close()
+            print("Reconnecting...")
+  
+        time.sleep(1)  
+        try:
+            sock = WebsocketUtils(WS_HOST, WS_PORT, WS_PATH)
+            lc.set_ws_indicator(True)
+            i = 0
+            return [1, sock]
+        
+        except OSError as e:
+            # 103 is for failed connection
+            if e.args[0] != 103:
+                print(e)
+                return [-1, sock]
+            else:
+                return [0, sock]
+        # this weird handshake connection occurs sometimes
+        except Exception as e:
+            if str(e) == "WebSocket handshake failed":
+                return [0, sock]
+    return [1, s]
+
 def main():
+    lc = LightController()
+    lc.set_balanced_brightness(500)
     # Connect to Wi-Fi
     connected = connect_to_wifi()
     if not connected:
@@ -22,33 +55,14 @@ def main():
     
     # Receive messages
     while True:
+        lc.balanced_brightness_brightness_balancing()
         # if silent for some time, drop current connection and try to reconnect
-        if i > RECONNECT_TIMEOUT_SECONDS/sleep_duration or i == -1:
-            if i == -1:  # connecting for the first time 
-                print("Connecting to websocket server...")
-            else:
-                sock.close()
-                print("Reconnecting...")
-                
-            time.sleep(1)
-            
-            try:
-                sock = WebsocketUtils(WS_HOST, WS_PORT, WS_PATH)
-                i = 0
-                print("Connected to WS!")
-            except OSError as e:
-                # 103 is for failed connection
-                if e.args[0] != 103:
-                    print(e)
-                    break
-                else:
-                    continue
-            # this weird handshake connection occurs sometimes
-            except Exception as e:
-                if str(e) == "WebSocket handshake failed":
-                    continue
-                
-            
+        status, sock = connect_reconnect_ws(i, RECONNECT_TIMEOUT_SECONDS/sleep_duration, sock, lc)
+        if status == -1:
+            break
+        if status == 0:
+            continue
+        
         # if any message shows up (message/ping etc)
         data = sock.recv(4096)
         if data:
@@ -60,7 +74,8 @@ def main():
             
             message = sock.decode_websocket_frame(data)
             if message:
-                handle_message(message, sock.send_websocket_message)
+                lc.handle_message(message, sock.send_websocket_message)
+                #handle_message(message, sock.send_websocket_message)
         
         i += 1
         time.sleep(sleep_duration)
