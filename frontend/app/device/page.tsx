@@ -24,6 +24,7 @@ export type LightBulbState = {
   isOn: boolean,
   brightnessLevel: number,
   balancedBrightness: boolean,
+  balancedBrightnessLevel: number,
   timer: LightBulbTimer | null,
   schedule: null,
 } 
@@ -36,6 +37,7 @@ export default function LightBulb() {
     isOn: false,
     brightnessLevel: 90,
     balancedBrightness: false,
+    balancedBrightnessLevel: 300,
     timer: null,
     schedule: null
   })
@@ -51,7 +53,7 @@ export default function LightBulb() {
         type: "command",
         payload: {
           deviceId: "device",
-          action: "turnOnOff",
+          action: "getStatus",
           value: 0
         }
       };
@@ -70,6 +72,9 @@ export default function LightBulb() {
       if (data.type === "status") {
         lightBulb.isOn = data.status.isOn;
         lightBulb.brightnessLevel = data.status.brightnessLevel;
+        lightBulb.balancedBrightness = data.status.balancedBrightness;
+        lightBulb.balancedBrightnessLevel = data.status.balancedBrightnessLevel;
+        console.log(data.status)
       } else if (data.type === "timer") {
         switch (data.action) {
           case "get":
@@ -202,7 +207,28 @@ export default function LightBulb() {
   // and then delete it
   const emergencyTimerStop = () => {
     lightBulb.timer = null;
-    setLightBulb({...lightBulb})
+    setLightBulb({...lightBulb});
+  }
+
+  const setBalancedBrightness = (value: number) => {
+    if (value === -1) {
+      lightBulb.balancedBrightness = false;
+    } else {
+      lightBulb.balancedBrightness = true;
+      lightBulb.balancedBrightnessLevel = value
+    }
+    setLightBulb({...lightBulb});
+    const message: WsCommand = {
+      type: "command",
+      payload: {
+        deviceId: "device",
+        action: "balancedBrightness",
+        value: value
+      }
+    };
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(message)); 
+    }
   }
 
   return (
@@ -212,7 +238,9 @@ export default function LightBulb() {
       </Link>
       <PowerIndicator isOn={lightBulb.isOn}/>
       <TurnOnOff isOn={lightBulb.isOn} setIsOn={turnOnTheLights}/>
-      <AutoBrightness brightness={lightBulb.brightnessLevel} setBrightness={adjustBrightness}></AutoBrightness>
+      <AutoBrightness bBrightness={lightBulb.balancedBrightness} 
+                      bBLevel={lightBulb.balancedBrightnessLevel}  
+                      setBBrightness={setBalancedBrightness}></AutoBrightness>
       <Brightness brightness={lightBulb.brightnessLevel} setBrightness={adjustBrightness}/>
 
       <div className="flex flex-col w-full">

@@ -4,7 +4,7 @@ type WsCommand = {
   type: "command",
   payload: {
     deviceId: string,
-    action: "turnOnOff" | "setBrightness" | "balacedBrightness",
+    action: "turnOnOff" | "setBrightness" | "balancedBrightness" | "getStatus",
     value: number
   }
 }
@@ -21,6 +21,7 @@ type WsStatus = {
     isOn: boolean,
     brightnessLevel: number,
     balancedBrightness: boolean
+    balancedBrightnessLevel: number
   }
 }
 

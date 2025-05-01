@@ -1,6 +1,5 @@
-import { SliderFat } from "@/components/slider-fat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -39,14 +38,27 @@ const brightnessLevels = [
   }
 ];
 
+interface AutoBrightnessProps {
+  bBrightness: boolean,
+  bBLevel: number,
+  setBBrightness: (val: number) => void
+}
+
 export default function AutoBrightness({
-  brightness, 
-  setBrightness
-}: {brightness: number, setBrightness: (val: number[]) => void}) {
-  const [isOn, setIsOn] = useState(false);
+  bBrightness,
+  bBLevel,
+  setBBrightness
+}: AutoBrightnessProps) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("300");
-  // onValueChange={(i) => handleValueChange(i)}
+  const [value, setValue] = useState(`${bBLevel}`);
+
+  const handleClick = () => {
+    setBBrightness(bBrightness ? -1 : parseInt(value));
+  }
+  useEffect(() => {
+    setValue(`${bBLevel}`)
+  }, [bBLevel])
+
   return (
     <Card>
       <CardHeader>
@@ -70,15 +82,14 @@ export default function AutoBrightness({
             </Button>
           </PopoverTrigger>
           <button className={cn("cursor-pointer w-12 h-12 rounded-full aspect-square flex items-center justify-center -mr-[12px]",
-                                isOn ? "bg-yellow-300" : "bg-stone-900")}
-                  onClick={() => setIsOn(!isOn)}
+                                bBrightness ? "bg-yellow-300" : "bg-stone-900")}
+                  onClick={handleClick}
           >
             <div className="w-6 h-6 -mt-[2px]">
-              <PowerSVG isOn={isOn}/>
+              <PowerSVG isOn={bBrightness}/>
             </div>
           </button>
         </div> 
-        {/* top-0 right-[calc(var(--radix-popover-trigger-width)/2)] left-[calc(var(--radix-popover-trigger-width)/2)] */}
         <PopoverContent className="absolute -right-[calc(var(--radix-popover-trigger-width)/2)] -left-[calc(var(--radix-popover-trigger-width)/2)] p-0">
           <Command>
             <CommandInput placeholder="Szukaj pomieszczenia..." />
@@ -88,9 +99,13 @@ export default function AutoBrightness({
                 {brightnessLevels.map((brightness) => (
                   <CommandItem
                     key={brightness.value}
+                    keywords={[brightness.label]}
                     value={"" + brightness.value}
                     onSelect={(currentValue) => {
-                      setValue(currentValue === value ? "300" : currentValue)
+                      setValue(currentValue === value ? "" : currentValue)
+                      bBrightness && (currentValue === value 
+                        ? setBBrightness(-1) 
+                        : setBBrightness(parseInt(currentValue)))
                       setOpen(false)
                     }}
                   >
@@ -111,7 +126,6 @@ export default function AutoBrightness({
           </Command>
         </PopoverContent>
       </Popover>
-        {/* <SliderFat defaultValue={[33]} max={100} step={1} value={[brightness]} onValueChange={setBrightness}></SliderFat> */}
       </CardContent>
     </Card>
   )

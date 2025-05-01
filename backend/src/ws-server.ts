@@ -74,7 +74,6 @@ export default function createWSServer(httpServer: Server) {
 
     ws.on('pong', () => {
       ws.isAlive = true;
-      console.log("PONG")
     })
   });
 
@@ -90,9 +89,8 @@ export default function createWSServer(httpServer: Server) {
   
       ws.isAlive = false;
       ws.ping();
-      console.log("PING")
     });
-  }, 1000);
+  }, 3000);
 
   wss.on('close', async (ws: WsExtended) => {
     console.log(`${ws.remoteAddress} ${ws.remotePort} disconnected`);
