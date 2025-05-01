@@ -12,8 +12,11 @@ class LightController:
         self.device_id = "device"
         self.is_on = False
         self.brightness_level = 60
-        self.balanced_brightness = True
+        self.balanced_brightness = False
         self.balanced_brightness_level = 300
+        
+        self._previus_lux = -1
+        self._previus_duty = -1
     
     def get_status(self, *args):
         device_status = {
@@ -63,38 +66,64 @@ class LightController:
     def set_balanced_brightness(self, value):
         if value <= 0:
             self.balanced_brightness = False
+            self._previus_lux = -1
+            self._previus_duty = -1
         else:
             self.balanced_brightness = True
             self.balanced_brightness_level = value
+            self._previus_lux = -1
+            self._previus_duty = -1
     
     def balanced_brightness_brightness_balancing(self):
         if self.balanced_brightness == False:
             return
         
-        duty_atomic = int(655.36)  # 65536*0.01
-    
+        duty_atomic = 655.36  # 65536*0.01
+        current_duty = self.led.duty_u16()
         lux = self.light_sensor.luminance(BH1750.CONT_HIRES_1)
         print("Lux {:.2f} {}".format(lux, self.balanced_brightness_level))
-        
-        increase_duty_by = (self.balanced_brightness_level - lux)/50 * duty_atomic
-        current_duty = 655.36*self.brightness_level
-        if current_duty + increase_duty_by > 65536:  # prevent overflowing this number
-            current_duty = 65536
-        elif current_duty + increase_duty_by < 0:
-            current_duty = 0
+
+        if self._previus_lux == -1:
+            direction = 1
+            if self.balanced_brightness_level < lux:
+                direction = -1
+            if current_duty > 65536 - duty_atomic:
+                direction = -1
+            self._previus_lux = lux
+            self._previus_duty = current_duty
+            self.led.duty_u16(int(current_duty + duty_atomic*direction))  # increase brightness only by a small fraction
         else:
-            current_duty = int(current_duty + increase_duty_by)
-    
-        self.brightness_level = current_duty/655.36
-        self.led.duty_u16(current_duty)
-        
+            duty_diff = current_duty - self._previus_duty
+            lux_diff = lux - self._previus_lux
+            # ZeroDivisionError prevention
+            if lux_diff == 0:
+                return
+            
+            
+            self._previus_lux = lux
+            self._previus_duty = current_duty
+            
+            regulation_strength = .8
+            lux_increase_needed = self.balanced_brightness_level - lux
+            increase_duty_by = lux_increase_needed/lux_diff*regulation_strength*duty_diff
+            
+            if current_duty + increase_duty_by > 65536:
+                current_duty = 65536
+            elif current_duty + increase_duty_by < 0:
+                current_duty = 0
+            else:
+                current_duty += increase_duty_by
+            
+            self.brightness_level = int(current_duty/655.36)
+            self.led.duty_u16(int(current_duty))
+            
     
     def handle_message(self, message, send_message):
         actions = {
             "turnOnOff": self.turn_on_off,
             "setBrightness": self.set_brightness,
             "balancedBrightness": self.set_balanced_brightness,
-            "getStatus": None  # self.get_status
+            "getStatus": self.get_status  # self.get_status
         }
         
         try:

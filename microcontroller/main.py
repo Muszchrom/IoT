@@ -43,7 +43,6 @@ def connect_reconnect_ws(i, i_threshold, s, lc):
 
 def main():
     lc = LightController()
-    lc.set_balanced_brightness(500)
     # Connect to Wi-Fi
     connected = connect_to_wifi()
     if not connected:
