@@ -5,27 +5,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { pad } from "@/lib/utils";
 
 interface DeviceActionTimeSettingsProps {
-  timeAfter: number,
-  setTimeAfter: (val: number) => void
+  timeAfter: number, // in seconds!
+  setTimeAfter: (val: number) => void,
+  setExecReferenceTime: (val: "absolute" | "sunrise" | "sunset") => void;
+  setBeforeSetAfter: (after: boolean) => void;
 }
 
-export default function DeviceActionTimeSettings({timeAfter, setTimeAfter}: DeviceActionTimeSettingsProps) {
-  const opts: ["user", "sunrise", "sunset"] = ["user", "sunrise", "sunset"];
-  const [currentTimePickerOption, setCurrentTimePickerOption] = useState<typeof opts[number]>("user");
-  const [beforeSelected, setBeforeSelected] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(timeAfter);
+export default function DeviceActionTimeSettings({timeAfter, setTimeAfter, setExecReferenceTime, setBeforeSetAfter}: DeviceActionTimeSettingsProps) {
+  const opts: ["absolute", "sunrise", "sunset"] = ["absolute", "sunrise", "sunset"];
+  const [currentTimePickerOption, setCurrentTimePickerOption] = useState<typeof opts[number]>("absolute");
+  const [timeLeft, setTimeLeft] = useState(Math.abs(timeAfter));
 
   const [timeSettingsHeader, setTimeSettingsHeader] = useState("Wykonanie akcji o godzinie 00:00") 
-  const [fastChangingTime, setFastChangingTime] = useState(timeAfter); // changing timeLeft => time-picker animations going baaad
+  const [fastChangingTime, setFastChangingTime] = useState(Math.abs(timeAfter)); // changing timeLeft => time-picker animations going baaad
 
   const fun = (secs: number) => {
     setFastChangingTime(secs);
-    setTimeAfter(secs);
+    setTimeAfter(secs * (timeAfter < 0 ? -1 : 1));
   }
 
   const titleSwitchCase = (val: typeof opts[number]) => {
     switch (val) {
-      case "user":
+      case "absolute":
         return "Własne ustawienia czasu"
       case "sunrise":
         return "Wschód słońca"
@@ -37,6 +38,7 @@ export default function DeviceActionTimeSettings({timeAfter, setTimeAfter}: Devi
   }
   const handleClick = (val: typeof opts[number]) => {
     setCurrentTimePickerOption(val)
+    setExecReferenceTime(val)
   }
 
   useEffect(() => {
@@ -46,14 +48,14 @@ export default function DeviceActionTimeSettings({timeAfter, setTimeAfter}: Devi
 
     const headerText = (() => {
       switch (currentTimePickerOption) {
-        case "user":
+        case "absolute":
           return `Wykonanie akcji o godzinie ${t}`
         case "sunrise":
-          return beforeSelected 
+          return timeAfter <= 0 
                   ? `Wykonanie akcji ${t} przed wschodem słońca` 
                   : `Wykonanie akcji ${t} po wschodzie słońca` 
         case "sunset":
-          return beforeSelected 
+          return timeAfter <= 0 
                   ? `Wykonanie akcji ${t} przed zachodem słońca` 
                   : `Wykonanie akcji ${t} po zachodzie słońca` 
         default:
@@ -61,7 +63,7 @@ export default function DeviceActionTimeSettings({timeAfter, setTimeAfter}: Devi
       }
     })();
     setTimeSettingsHeader(headerText);
-  }, [fastChangingTime, currentTimePickerOption, beforeSelected])
+  }, [fastChangingTime, currentTimePickerOption, timeAfter])
 
   return (
     <Card>
@@ -87,11 +89,11 @@ export default function DeviceActionTimeSettings({timeAfter, setTimeAfter}: Devi
           })}
         </div>
         <div className="">
-          <TimePicker timeLeft={timeLeft} setTimeLeft={setTimeLeft} fun={fun}/>
-          { currentTimePickerOption !== "user" && (
+          <TimePicker selectedTimeInSeconds={timeLeft} setSelectedTimeInSeconds={setTimeLeft} fun={fun}/>
+          { currentTimePickerOption !== "absolute" && (
             <div className="flex flex-row gap-6 px-6">
-              <Button variant={beforeSelected ? "secondary" : "outline"} onClick={() => setBeforeSelected(true)} className="shrink w-full font-thin py-0 px-1 min-h-9">Przed</Button>
-              <Button variant={beforeSelected ? "outline" : "secondary"} onClick={() => setBeforeSelected(false)} className="shrink w-full font-thin py-0 px-1 min-h-9">Po</Button>
+              <Button variant={timeAfter < 0 ? "secondary" : "outline"} onClick={() => setBeforeSetAfter(false)} className="shrink w-full font-thin py-0 px-1 min-h-9">Przed</Button>
+              <Button variant={timeAfter < 0 ? "outline" : "secondary"} onClick={() => setBeforeSetAfter(true)} className="shrink w-full font-thin py-0 px-1 min-h-9">Po</Button>
             </div>
           )
           }

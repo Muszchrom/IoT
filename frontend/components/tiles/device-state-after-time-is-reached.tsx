@@ -1,21 +1,10 @@
-import { ExampleData } from "@/interfaces/schedule";
-import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function DeviceStateAfterTimeIsReached({deviceStateAfter, setDeviceStateAfter}: {deviceStateAfter: ExampleData["action"], setDeviceStateAfter: (val: ExampleData["action"]) => void}) {
-  // const [deviceState, setDeviceState] = useState<ExampleData["action"]>(deviceStateAfter)
-  const deviceStates: ["turn-on", "turn-off"] = ["turn-on", "turn-off"]; // optional implementation "Pojawienie się", "Zanikanie"
-  
-  const translate = (val: ExampleData["action"]) => {
-    if (val === "turn-off") return "Wyłączone";
-    else if (val === "turn-on") return "Włączone";
-    else throw Error("Invalid arg org");
-  }
-  
+export default function DeviceStateAfterTimeIsReached({deviceStateAfter, setDeviceStateAfter}: {deviceStateAfter: number, setDeviceStateAfter: (val: number) => void}) {
   return (
     <Card className="pb-0">
       <CardHeader>  
@@ -23,25 +12,27 @@ export default function DeviceStateAfterTimeIsReached({deviceStateAfter, setDevi
           Urządzenie będzie
         </CardTitle>
         <CardDescription>
-          {translate(deviceStateAfter)}
+          {deviceStateAfter ? "Włączone" : "Wyłączone"}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col px-0">
-        {deviceStates.map((item) => {
-          return (
-            <div  key={item} className="flex flex-col w-full">
-              {/* <Button variant="outline" className={cn(item === "Zanikanie" ? "rounded-b-xl rounded-t-none" : "rounded-none", "border-none h-auto py-4 px-6 justify-start")}> */}
-              <Button variant="outline"
-                      onClick={() => setDeviceStateAfter(item)} 
-                      className={cn(item === deviceStates[deviceStates.length - 1] ? "rounded-b-xl rounded-t-none" : "rounded-none", "p-6 border-b-0 justify-between border-none")}>
-                {translate(item)}
-                <div className={cn(deviceStateAfter !== item && "hidden")}><Check /></div>
-              </Button>
-              <Separator className={cn(item === deviceStates[deviceStates.length - 1] && "hidden")}></Separator>
-            </div>
-          )
-        })
-        }
+        <div className="flex flex-col w-full">
+          <Button variant="outline"
+                  onClick={() => setDeviceStateAfter(1)} 
+                  className={"rounded-none p-6 border-b-0 justify-between border-none"}>
+            Włączone
+            <div className={deviceStateAfter === 0 ? "hidden" : ""}><Check /></div>
+          </Button>
+        </div>
+        <Separator />
+        <div className="flex flex-col w-full">
+          <Button variant="outline"
+                  onClick={() => setDeviceStateAfter(0)} 
+                  className={"rounded-b-xl rounded-t-none p-6 border-b-0 justify-between border-none"}>
+            Wyłączone
+            <div className={deviceStateAfter === 1 ? "hidden" : ""}><Check /></div>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

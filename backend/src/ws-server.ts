@@ -6,6 +6,7 @@ import { messageHandlers } from './ws/message-handlers';
 import { timerJobs } from './queue/timer-jobs';
 import { Redis } from "ioredis";
 import { commandHandlers } from './ws/command-handlers';
+import { scheduleJobs } from './queue/schedule-jobs';
 
 if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) throw new Error("No REDIS_HOST and REDIS_PORT in env vars");
 const redisSubscriber = new Redis(parseInt(process.env.REDIS_PORT), process.env.REDIS_HOST);
@@ -63,6 +64,8 @@ export default function createWSServer(httpServer: Server) {
           handler(ws, parsed)
         } else if (parsed.type === "timer") {
           timerJobs[parsed.action](ws, parsed, redisClient);
+        } else if (parsed.type === "schedule") {
+          scheduleJobs[parsed.action](ws, parsed, redisClient);
         } else {
           console.warn("Unsupported message type:", parsed);
         }

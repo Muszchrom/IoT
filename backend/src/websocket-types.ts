@@ -1,4 +1,4 @@
-type WsMessage = WsCommand | WsError | WsStatus | WsTimer
+type WsMessage = WsCommand | WsError | WsStatus | WsTimer | WsSchedule
 
 type WsTimer = {
   type: "timer",
@@ -12,12 +12,12 @@ type WsTimer = {
 type WsSchedule = {
   type: "schedule",
   action: "set" | "get" | "del" | "edit",
-  active: "boolean", // is this job disabled
-  execReferenceTime: "currentTime" | "sunrise" | "sunset"
-  execTimeInMinutes?: number, // hours and minutes in single variable, could be negative which means run before sunset/sunrise
-  repeatAtDays?: number[], // 0 - 6 / sun-sat
+  active: boolean, // is this job disabled
+  execReferenceTime: "absolute" | "sunrise" | "sunset"
+  execTimeInMinutes: number, // hours and minutes in single variable, could be negative which means run before sunset/sunrise
+  repeatAtDays: number[], // 0 - 6 / sun-sat
   jobId?: string | number,
-  commands?: WsCommand[] // commands that will be performed
+  commands: WsCommand[] // commands that will be performed
 }
 
 type WsCommand = {

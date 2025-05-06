@@ -1,16 +1,15 @@
-import { ExampleData, FixedLengthArray } from "@/interfaces/schedule";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export default function RepeatAtSelectedDays({actAtTheseDays, setActAtTheseDays}: {actAtTheseDays: ExampleData["repeats"], setActAtTheseDays: (arr: ExampleData["repeats"]) => void}) {
+export default function RepeatAtSelectedDays({actAtTheseDays, setActAtTheseDays}: {actAtTheseDays: number[], setActAtTheseDays: (arr: number[]) => void}) {
   const days = ["N", "P", "W", "Ś", "C", "P", "S"]
   const days2 = ["nd", "pon", "wt", "śr", "czw", "pt", "sob"];
 
   const handleClick = (idx: number) => {
     const a = actAtTheseDays;
-    a[idx] = !actAtTheseDays[idx];
-    setActAtTheseDays([...a] as FixedLengthArray);
+    a[idx] = actAtTheseDays[idx] === 0 ? 1 : 0;
+    setActAtTheseDays(a);
   }
 
   return (

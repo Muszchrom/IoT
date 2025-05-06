@@ -8,7 +8,7 @@ import Wrapper from "@/components/wrapper";
 import ScheduleModal from "@/components/tiles/schedule-modal";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import { WsCommand, WsStatus, WsTimer } from "@/interfaces/types";
+import { WsCommand, WsSchedule, WsStatus, WsTimer } from "@/interfaces/types";
 import AutoBrightness from "@/components/tiles/auto-brightness";
 import { toast } from "sonner";
 
@@ -26,7 +26,7 @@ export type LightBulbState = {
   balancedBrightness: boolean,
   balancedBrightnessLevel: number,
   timer: LightBulbTimer | null,
-  schedule: null,
+  schedule: WsSchedule[],
 } 
 
 export default function LightBulb() {
@@ -39,8 +39,9 @@ export default function LightBulb() {
     balancedBrightness: false,
     balancedBrightnessLevel: 300,
     timer: null,
-    schedule: null
+    schedule: [] // dont use it
   })
+  const [schedules, setSchedules] = useState<WsSchedule[]>([]);
 
   // ws initializer
   useEffect(() => {
@@ -61,13 +62,18 @@ export default function LightBulb() {
         type: "timer",
         action: "get"
       }
+      const scheduleInfoMessage = {
+        type: "schedule",
+        action: "get"
+      }
       ws.send(JSON.stringify(message));
       ws.send(JSON.stringify(timerInfoMessage))
+      ws.send(JSON.stringify(scheduleInfoMessage))
       setSocket(ws);
     }
 
     ws.onmessage = async (event) => {
-      const data: WsStatus | WsTimer = await JSON.parse(event.data);
+      const data: WsStatus | WsTimer | {type: "schedule", action: WsSchedule["action"], data: WsSchedule[]} = await JSON.parse(event.data);
       console.log("Received: ", data);
       if (data.type === "status") {
         lightBulb.isOn = data.status.isOn;
@@ -95,6 +101,23 @@ export default function LightBulb() {
             lightBulb.timer = null;
           default:
             return;
+        }
+      } else if (data.type === "schedule") {
+        switch (data.action) {
+          case "get":
+            setSchedules(data.data);
+            return;
+          case "set":
+            setSchedules(data.data);
+            return;
+          case "del":
+            setSchedules(data.data);
+            return
+          case "edit":
+            setSchedules(data.data);
+            return
+          default:
+            return
         }
       }
       setLightBulb({...lightBulb});
@@ -210,6 +233,12 @@ export default function LightBulb() {
     setLightBulb({...lightBulb});
   }
 
+  const handleSchedule = (data: WsSchedule) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(data)); 
+    }
+  }
+
   const setBalancedBrightness = (value: number) => {
     if (value === -1) {
       lightBulb.balancedBrightness = false;
@@ -245,8 +274,12 @@ export default function LightBulb() {
 
       <div className="flex flex-col w-full">
         <div className="flex w-full gap-2">
-          <TimerModal timerData={lightBulb.timer} setTimerData={handleTimer} emergencyStopFunction={emergencyTimerStop}/>
-          <ScheduleModal />
+          <TimerModal timerData={lightBulb.timer} 
+                      setTimerData={handleTimer} 
+                      emergencyStopFunction={emergencyTimerStop}/>
+          <ScheduleModal scheduleDataArray={schedules} 
+                         setScheduleDataArray={setSchedules} 
+                         sendMessage={handleSchedule}/>
         </div>
       </div>
     </Wrapper>

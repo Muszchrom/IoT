@@ -1,11 +1,15 @@
 import Queue from "bull";
-import { WsCommand, WsTimer } from "../websocket-types";
+import { WsCommand, WsSchedule, WsTimer } from "../websocket-types";
 import Redis from "ioredis";
 
 if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) throw new Error("No REDIS_HOST and REDIS_PORT in env vars");
 const redis = new Redis(parseInt(process.env.REDIS_PORT), process.env.REDIS_HOST);
 
 const timerQueue = new Queue("timerQueue", {
+  redis: { host: "database", port: 6379 },
+});
+
+const scheduleQueue = new Queue("timerQueue", {
   redis: { host: "database", port: 6379 },
 });
 
@@ -26,3 +30,8 @@ timerQueue.process(async (job) => {
     await redis.publish("ws-messages", JSON.stringify(command));
   });
 });
+
+
+scheduleQueue.process(async (job) => {
+  const data: WsSchedule = job.data
+})

@@ -2,63 +2,143 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { CalendarPlus } from "lucide-react";
 import Wrapper from "@/components/wrapper";
-import { ExampleData } from "@/interfaces/schedule";
 import ScheduledAction from "../scheduled-action";
 import { useState } from "react";
 import { Card } from "../ui/card";
 import EditSchedule from "./edit-schedule";
+import { WsSchedule } from "@/interfaces/types";
 
-export default function ScheduleModal() {
-  const exampleData: ExampleData[] = [
-    {
-      time: 21600, 
-      auto: true, 
-      action: "turn-on",
-      repeats: [false, true, true, true, true, true, false] 
-    },
-    {
-      time: 82800, 
-      auto: false, 
-      action: "turn-off",
-      repeats: [false, true, true, true, true, true, false] 
-    },
-    {
-      time: 82800, 
-      auto: false, 
-      action: "turn-off",
-      repeats: [false, true, true, true, true, true, false] 
-    }
-  ];
+const exampleData: WsSchedule[] = [
+  {
+    type: "schedule",
+    action: "set",
+    active: false, 
+    execReferenceTime: "absolute",
+    execTimeInMinutes: 7*60,
+    repeatAtDays: [0, 1, 1, 1, 1, 0, 0], 
+    jobId: 1,
+    commands: [
+      {
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: 1
+        }
+      }
+    ]
+  },
+  {
+    type: "schedule",
+    action: "set",
+    active: true, 
+    execReferenceTime: "absolute",
+    execTimeInMinutes: 7*60,
+    repeatAtDays: [1, 0, 0, 0, 0, 0, 1], 
+    jobId: 2,
+    commands: [
+      {
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: 1
+        }
+      }
+    ]
+  },
+  {
+    type: "schedule",
+    action: "set",
+    active: true, 
+    execReferenceTime: "absolute",
+    execTimeInMinutes: 7*60,
+    repeatAtDays: [1, 1, 1, 1, 1, 1, 1], 
+    jobId: 3,
+    commands: [
+      {
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: 1
+        }
+      }
+    ]
+  }
+];
 
-  const [scheduleDataArray, setScheduleDataArray] = useState(exampleData);
-  const [editPageDataIndex, setEditPageDataIndex] = useState<null | number>(null); // which schedule to edit, like which tile or something. Set as -1 to add new. Null means its not set
 
-
-  const updateScheduleDataArray = (val: ExampleData, idx: number) => {
-    if (idx !== null && idx >= 0) {
-      scheduleDataArray[idx] = val;
-      setScheduleDataArray([...scheduleDataArray])
-    }
+export default function ScheduleModal({
+  sendMessage, 
+  scheduleDataArray,
+  setScheduleDataArray
+}: {
+  sendMessage: (data: WsSchedule) => void
+  scheduleDataArray: WsSchedule[],
+  setScheduleDataArray: (data: WsSchedule[]) => void
+}) {
+  const initDataForNewSchedule: WsSchedule = {
+    type: "schedule",
+    action: "set",
+    active: true, 
+    execReferenceTime: "absolute",
+    execTimeInMinutes: 7*60, // Its in minutes
+    repeatAtDays: [0, 0, 0, 0, 0, 0, 0], 
+    jobId: undefined,
+    commands: [
+      {
+        type: "command",
+        payload: {
+          deviceId: "device",
+          action: "turnOnOff",
+          value: 1
+        }
+      }
+    ]
   }
 
-  const handleShowEditPage = (idx: number) => {
-    setEditPageDataIndex(idx);
+  const [scheduleCurrentlyEdited, setScheduleCurrentlyEdited] = useState<WsSchedule | null>(null);
+
+  const handleShowEditPage = (scheduleData: WsSchedule) => {
+    setScheduleCurrentlyEdited(scheduleData);
   }
 
   const handleReturnFromEdit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    if (editPageDataIndex !== null) {
+    if (scheduleCurrentlyEdited) {
       e.preventDefault();
-      setEditPageDataIndex(null);
+      setScheduleCurrentlyEdited(null);
     }
   }
 
+  const handleNewSchedule = () => {
+    setScheduleCurrentlyEdited(initDataForNewSchedule);
+  }
 
-  // const ifScheduleDataNotPresent: ExampleData = {
-  //   time: 0,
-  //   auto: false,
-  //   action: "turn-on",
-  //   repeats: [false, false, false, false, false, false, false]
-  // }
+  const saveChanges = () => {
+    if (scheduleCurrentlyEdited === null) throw new Error("Somehow null showed up");
+    if (scheduleCurrentlyEdited.jobId) {
+      scheduleCurrentlyEdited.action = "edit"
+    } else {
+      scheduleCurrentlyEdited.action = "set"
+    }
+    sendMessage(scheduleCurrentlyEdited);
+    setScheduleCurrentlyEdited(null);
+  }
+
+  const handleActiveChange = (checked: boolean, idx: number) => {
+    scheduleDataArray[idx].active = checked;
+    const x = scheduleDataArray[idx];
+    x.action = "edit";
+    sendMessage(x);
+    setScheduleDataArray(scheduleDataArray.slice());
+  }
+
+  const deleteSchedule = (data: WsSchedule) => {
+    data.action = "del";
+    sendMessage(data);
+    setScheduleCurrentlyEdited(null);
+  }
 
   return (
     <Dialog>
@@ -74,24 +154,34 @@ export default function ScheduleModal() {
           <DialogHeader className="mb-6">
             <DialogTitle>Harmonogram</DialogTitle>
           </DialogHeader>
-
-          {editPageDataIndex === null ? (
+          {scheduleCurrentlyEdited === null ? (
             <>
-              {scheduleDataArray.length && (
-                <Card className="py-0 gap-0">
+              {scheduleDataArray.length ? (
+                <Card className="py-0 gap-0 overflow-hidden">
                   {scheduleDataArray.map((scheduleData, idx) => {
-                    return <ScheduledAction data={scheduleData} key={idx} handleClick={() => handleShowEditPage(idx)}/>
+                    return <ScheduledAction data={scheduleData} 
+                                            key={idx} 
+                                            handleClick={() => handleShowEditPage(scheduleData)} 
+                                            handleActiveChange={(checked) => handleActiveChange(checked, idx)}/>
                   })}
                 </Card>
+              ) : (
+                <div className="w-full text-center py-6">
+                  <span className="text-5xl mb-2">🫠</span>
+                  <span>Nic tu jeszcze nie ma</span>
+                </div>
               )}
 
-              <Button variant="outline" className="mt-auto font-bold">
+              <Button variant="outline" className="mt-auto font-bold" onClick={handleNewSchedule}>
                 Dodaj nowy
               </Button>
             </>
           ) : (
             <>
-              <EditSchedule scheduleData={scheduleDataArray[editPageDataIndex]} setScheduleData={(val: ExampleData) => updateScheduleDataArray(val, editPageDataIndex)}/>
+              <EditSchedule scheduleData={scheduleCurrentlyEdited} 
+                            setScheduleData={setScheduleCurrentlyEdited} 
+                            saveChanges={saveChanges}
+                            deleteSchedule={deleteSchedule}/>
             </>
           )}
 
